@@ -9,10 +9,21 @@ class ClusterImage
 {
 private:
     std::string imageName;
+    int binSize;
     Histogram feature;
+    int cluster;
 
 public:
-    ClusterImage(void);
+    typedef unsigned char u_char;
+    ClusterImage(void);                                                                                        //default constructor
+    ClusterImage(const std::string &imageName, const int binSize, const std::vector<u_char> &greyscalePixels); //paramterised constructor
+    ClusterImage(const ClusterImage &rhs);                                                                     //copy constructor
+    ClusterImage(ClusterImage &&rhs);                                                                          //move constructor
+    ClusterImage &operator=(const ClusterImage &rhs);                                                          //copy assignment operator
+    ClusterImage &operator=(ClusterImage &&rhs);                                                               //move assignment operator
+    Histogram extractFeature(const int binSize, const std::vector<u_char> &greyscalePixels);
+
+    std::string getImageName() const;
     ~ClusterImage();
 };
 
