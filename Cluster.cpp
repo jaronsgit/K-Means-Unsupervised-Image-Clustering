@@ -25,6 +25,8 @@ std::vector<float> Cluster::calculateNewMean(void) const
     {
         tempMean[i] /= numImages;
     }
+
+    return tempMean;
 }
 
 std::vector<float> Cluster::getMean(void) const
@@ -67,12 +69,14 @@ int Cluster::getSize(void) const
 
 std::ostream &operator<<(std::ostream &os, const Cluster &ct)
 {
-    os << "Cluster " << ct.getID << " :";
+    os << "Cluster " << ct.getID() << " :";
     for (auto const &img : ct.images)
     {
         os << " " << img->getImageName();
     }
     os << std::endl;
+
+    return os;
 }
 
 } // namespace CHNJAR003
