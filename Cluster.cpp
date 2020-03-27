@@ -36,4 +36,43 @@ void Cluster::setMean(std::vector<float> mean)
     this->mean = mean;
 }
 
+void Cluster::clearCluster(void)
+{
+    this->images.clear();
+}
+void Cluster::addClusterImage(const std::shared_ptr<ClusterImage> &cImgPtr)
+{
+    this->images.push_back(cImgPtr);
+}
+bool Cluster::removeClusterImage(int imgID)
+{
+    for (int i = 0; i < images.size(); i++)
+    {
+        if (images[i]->getImgID() == imgID)
+        {
+            images.erase(images.begin() + i);
+            return true;
+        }
+    }
+    return false;
+}
+int Cluster::getID(void) const
+{
+    return this->clusterID;
+}
+int Cluster::getSize(void) const
+{
+    return this->images.size();
+}
+
+std::ostream &operator<<(std::ostream &os, const Cluster &ct)
+{
+    os << "Cluster " << ct.getID << " :";
+    for (auto const &img : ct.images)
+    {
+        os << " " << img->getImageName();
+    }
+    os << std::endl;
+}
+
 } // namespace CHNJAR003
