@@ -17,12 +17,12 @@ private:
     std::vector<std::shared_ptr<ClusterImage>> images;
 
 public:
-    Cluster(void);                          //defeault constructor
-    Cluster(const Cluster &rhs);            //copy constructor
-    Cluster(Cluster &&rhs);                 //move constructor
-    Cluster &operator=(const Cluster &rhs); //copy assignment operator
-    Cluster &operator=(Cluster &&rhs);      //move assignment operator
-    ~Cluster();                             //destructor
+    Cluster(void) = default;                         //default constructor
+    Cluster(const Cluster &rhs) = delete;            //copy constructor
+    Cluster(Cluster &&rhs) = delete;                 //move constructor
+    Cluster &operator=(const Cluster &rhs) = delete; //copy assignment operator
+    Cluster &operator=(Cluster &&rhs) = delete;      //move assignment operator
+    ~Cluster() = default;                            //destructor
 
     std::vector<float> calculateNewMean(void) const;
     std::vector<float> getMean(void) const;
