@@ -1,8 +1,8 @@
 CC=g++
 LIBS=-lm
 
-clusterer: driver.o
-	$(CC) driver.o -o clusterer -std=c++11 $(LIBS)
+clusterer: driver.o KMeansClusterer.o Cluster.o ClusterImage.o
+	$(CC) driver.o KMeansClusterer.o Cluster.o ClusterImage.o -o clusterer -std=c++11 $(LIBS)
 
 %.o : %.cpp   
 	$(CC) -c $< -o $@ -std=c++11
