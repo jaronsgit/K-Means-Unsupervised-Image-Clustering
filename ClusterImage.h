@@ -9,22 +9,27 @@ class ClusterImage
 {
 private:
     std::string imageName;
+    int imgID;
     int binSize;
-    Histogram feature;
-    int cluster;
+    std::vector<unsigned char> feature;
 
 public:
     typedef unsigned char u_char;
+
     ClusterImage(void);                                                                                        //default constructor
     ClusterImage(const std::string &imageName, const int binSize, const std::vector<u_char> &greyscalePixels); //paramterised constructor
     ClusterImage(const ClusterImage &rhs);                                                                     //copy constructor
     ClusterImage(ClusterImage &&rhs);                                                                          //move constructor
     ClusterImage &operator=(const ClusterImage &rhs);                                                          //copy assignment operator
     ClusterImage &operator=(ClusterImage &&rhs);                                                               //move assignment operator
-    Histogram extractFeature(const int binSize, const std::vector<u_char> &greyscalePixels);
+    ~ClusterImage();                                                                                           //destructor
 
+    std::vector<unsigned char> extractFeature(const int binSize, const std::vector<u_char> &greyscalePixels);
     std::string getImageName() const;
-    ~ClusterImage();
+    int getImgID() const;
+    std::vector<u_char> getFeature() const;
+    //float calculateMean(const std::vector<unsigned char> &histogramArr);
+    //float getMean(void) const;
 };
 
 } // namespace CHNJAR003
