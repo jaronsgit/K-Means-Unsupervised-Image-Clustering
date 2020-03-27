@@ -91,4 +91,14 @@ std::vector<u_char> ClusterImage::getFeature() const
     return feature;
 }
 
+int ClusterImage::getBinSize() const
+{
+    return binSize;
+}
+
+/*bool ClusterImage::setImageName(const std::string &imageName)
+{
+}
+bool ClusterImage::setImgID(const int id) {}
+bool ClusterImage::setFeature(const std::vector<u_char> &feature) {}*/
 } // namespace CHNJAR003
