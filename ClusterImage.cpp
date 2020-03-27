@@ -67,4 +67,28 @@ ClusterImage::~ClusterImage()
     feature.clear();
 }
 
+std::vector<u_char> ClusterImage::extractFeature(const int binSize, const std::vector<u_char> &greyscalePixels)
+{
+    std::vector<u_char> tempFeature(256 / binSize, 0);
+
+    for (auto const &pixel : greyscalePixels)
+    {
+        tempFeature[pixel] += 1;
+    }
+
+    return tempFeature;
+}
+std::string ClusterImage::getImageName() const
+{
+    return imageName;
+}
+int ClusterImage::getImgID() const
+{
+    return imgID;
+}
+std::vector<u_char> ClusterImage::getFeature() const
+{
+    return feature;
+}
+
 } // namespace CHNJAR003
