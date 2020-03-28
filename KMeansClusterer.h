@@ -17,7 +17,7 @@ private:
     int binSize;
     int numClusters;
     std::vector<std::shared_ptr<ClusterImage>> images;
-    std::vector<std::unique_ptr<std::string>> clusters;
+    std::vector<std::unique_ptr<Cluster>> clusters;
 
     int findNearestCluster(std::shared_ptr<ClusterImage> image); //return the id number of the nearest cluster
 

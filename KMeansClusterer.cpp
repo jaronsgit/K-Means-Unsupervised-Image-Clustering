@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <memory>
+#include <cmath>
 
 typedef unsigned char u_char;
 
@@ -131,6 +132,49 @@ std::vector<std::shared_ptr<ClusterImage>> KMeansClusterer::readInImages(const s
     std::cout << "Finished reading and processing of PPM files." << std::endl;
     return images;
 }
+
+int KMeansClusterer::findNearestCluster(std::shared_ptr<ClusterImage> image)
+{
+    double tot = 0.0, minEuclidDist;
+
+    int nearestClusterID;
+
+    std::vector<float> tempMean = clusters[0]->getMean();
+    std::vector<u_char> tempFeature = image->getFeature();
+
+    //calculate the euclidian distance of the point from the mean of the cluster
+    for (int i = 0; i < 256 / binSize; i++)
+    {
+        tot += pow(tempMean[i] - tempFeature[i], 2.0);
+    }
+
+    minEuclidDist = sqrt(tot);
+    nearestClusterID = clusters[0]->getID();
+
+    for (int i = 1; i < numClusters; i++)
+    {
+        double newEuclidDist;
+        tot = 0.0;
+
+        std::vector<float> tempMean = clusters[i]->getMean();
+
+        for (int j = 0; j < 256 / binSize; j++)
+        {
+            tot += pow(tempMean[j] - tempFeature[j], 2.0);
+        }
+
+        newEuclidDist = sqrt(tot);
+
+        if (newEuclidDist < minEuclidDist)
+        {
+            minEuclidDist = newEuclidDist;
+            nearestClusterID = clusters[i]->getID();
+        }
+    }
+
+    return nearestClusterID;
+}
+
 //std::vector<u_char> KMeansClusterer::convertToGreyscale(std::vector<u_char> rgbValues) {}
 KMeansClusterer::~KMeansClusterer() {}
 } // namespace CHNJAR003
