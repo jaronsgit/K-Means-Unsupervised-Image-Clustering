@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <memory>
 
 typedef unsigned char u_char;
 
@@ -14,7 +15,13 @@ namespace CHNJAR003
 
 KMeansClusterer::KMeansClusterer(const std::string &dataset, const std::string &output, const int numClusters, const int binSize) : datasetDir(dataset), outputFileName(output), numClusters(numClusters), binSize(binSize)
 {
-    readInImages(datasetDir);
+    this->images = readInImages(datasetDir);
+
+    /*for (auto const &image : images)
+    {
+        std::cout << image.use_count() << std::endl;
+        std::cout << image->getImageName() << std::endl;
+    }*/
 }
 
 std::vector<std::shared_ptr<ClusterImage>> KMeansClusterer::readInImages(const std::string &datasetDir)
@@ -29,7 +36,7 @@ std::vector<std::shared_ptr<ClusterImage>> KMeansClusterer::readInImages(const s
     if ((dir = opendir(datasetDir.c_str())) != NULL)
     {
         /* print all the files and directories within directory */
-        std::cout << "About to print all the files in the directory:" << std::endl;
+        std::cout << "Extracting PPM file names from directoy..." << std::endl;
         std::string tempName;
         while ((ent = readdir(dir)) != NULL)
         {
@@ -53,7 +60,7 @@ std::vector<std::shared_ptr<ClusterImage>> KMeansClusterer::readInImages(const s
 
     std::ifstream ppmFile;
     std::string tempLine;
-
+    std::cout << "Reading in the PPM files..." << std::endl;
     for (auto const fileName : fileNames)
     {
         //std::cout << fileName << std::endl;
@@ -94,6 +101,23 @@ std::vector<std::shared_ptr<ClusterImage>> KMeansClusterer::readInImages(const s
                 int numBytes = Nrows * Ncols * 3;
                 u_char buffer[numBytes];
                 ppmFile.read((char *)buffer, numBytes); //buffer now stores RGB image data
+
+                std::vector<u_char> greyscaleP;
+
+                for (int i = 0; i < numBytes / 3; i++)
+                {
+                    u_char tempGreyPixel = 0.21 * buffer[i] + 0.72 * buffer[i + 1] + 0.07 * buffer[i + 2];
+                    greyscaleP.push_back(tempGreyPixel);
+                }
+
+                //std::cout << id << std::endl;
+                //std::cout << fileName << std::endl;
+                //std::cout << binSize << std::endl;
+                //std::cout << greyscaleP.size() << std::endl;
+
+                std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>(id, fileName, binSize, greyscaleP);
+                id++;
+                images.push_back(tempCIPtr);
             }
             catch (const std::exception &e)
             {
@@ -104,7 +128,7 @@ std::vector<std::shared_ptr<ClusterImage>> KMeansClusterer::readInImages(const s
         }
     }
     //std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>();
-
+    std::cout << "Finished reading and processing of PPM files." << std::endl;
     return images;
 }
 //std::vector<u_char> KMeansClusterer::convertToGreyscale(std::vector<u_char> rgbValues) {}
