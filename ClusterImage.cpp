@@ -1,5 +1,5 @@
 #include "ClusterImage.h"
-
+#include <iostream>
 namespace CHNJAR003
 {
 ClusterImage::ClusterImage()
@@ -70,12 +70,18 @@ ClusterImage::~ClusterImage()
 std::vector<u_char> ClusterImage::extractFeature(const int binSize, const std::vector<u_char> &greyscalePixels)
 {
     std::vector<u_char> tempFeature(256 / binSize, 0);
-
-    for (auto const &pixel : greyscalePixels)
+    try
     {
-        tempFeature[pixel] += 1;
-    }
 
+        for (auto const &pixel : greyscalePixels)
+        {
+            tempFeature[(pixel - 1) / binSize] += 1;
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
     return tempFeature;
 }
 std::string ClusterImage::getImageName() const
