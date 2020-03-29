@@ -21,8 +21,13 @@ KMeansClusterer::KMeansClusterer(const std::string &dataset, const std::string &
     runClustering();
     /*for (auto const &image : images)
     {
-        std::cout << image.use_count() << std::endl;
-        std::cout << image->getImageName() << std::endl;
+        std::vector<u_char> tempFeature = image->getFeature();
+        std::cout << "[";
+        for (auto const &bin : tempFeature)
+        {
+            std::cout << int(bin) << ", ";
+        }
+        std::cout << "]" << std::endl;
     }*/
 }
 
@@ -38,7 +43,7 @@ std::vector<std::shared_ptr<ClusterImage>> KMeansClusterer::readInImages(const s
     if ((dir = opendir(datasetDir.c_str())) != NULL)
     {
         /* print all the files and directories within directory */
-        std::cout << "Extracting PPM file names from directoy..." << std::endl;
+        std::cout << "Extracting PPM file names from directory..." << std::endl;
         std::string tempName;
         while ((ent = readdir(dir)) != NULL)
         {
@@ -147,10 +152,10 @@ int KMeansClusterer::findNearestCluster(std::shared_ptr<ClusterImage> image)
     //calculate the euclidian distance of the point from the mean of the cluster
     for (int i = 0; i < 256 / binSize; i++)
     {
-        tot += pow(tempMean[i] - tempFeature[i], 2.0);
+        tot += std::pow(tempMean[i] - tempFeature[i], 2.0);
     }
 
-    minEuclidDist = sqrt(tot);
+    minEuclidDist = std::sqrt(tot);
     nearestClusterID = clusters[0]->getID();
 
     for (int i = 1; i < numClusters; i++)
@@ -162,10 +167,10 @@ int KMeansClusterer::findNearestCluster(std::shared_ptr<ClusterImage> image)
 
         for (int j = 0; j < 256 / binSize; j++)
         {
-            tot += pow(tempMean[j] - tempFeature[j], 2.0);
+            tot += std::pow(tempMean[j] - tempFeature[j], 2.0);
         }
 
-        newEuclidDist = sqrt(tot);
+        newEuclidDist = std::sqrt(tot);
 
         if (newEuclidDist < minEuclidDist)
         {
@@ -175,13 +180,36 @@ int KMeansClusterer::findNearestCluster(std::shared_ptr<ClusterImage> image)
     }
 
     return nearestClusterID;
+
+    /*
+    float imageMean = image->getFeatureMean();
+    float clusterMean = clusters[0]->getMean();
+    int nearestClusterID = clusters[0]->getID();
+
+    double minDist = std::abs(clusterMean - imageMean);
+
+    double newDist;
+
+    for (int i = 1; i < numClusters; i++)
+    {
+        clusterMean = clusters[i]->getMean();
+        newDist = std::abs(imageMean - clusterMean);
+
+        if (newDist < minDist)
+        {
+            minDist = newDist;
+            nearestClusterID = clusters[i]->getID();
+        }
+    }
+
+    return nearestClusterID;*/
 }
 
 std::vector<u_char> KMeansClusterer::convertToGreyscale(std::vector<u_char> rgbValues)
 {
     std::vector<u_char> greyscaleP;
 
-    for (int i = 0; i < rgbValues.size() / 3; i++)
+    for (int i = 0; i < rgbValues.size(); i += 3)
     {
         u_char tempGreyPixel = 0.21 * rgbValues[i] + 0.72 * rgbValues[i + 1] + 0.07 * rgbValues[i + 2];
         greyscaleP.push_back(tempGreyPixel);
@@ -198,6 +226,7 @@ void KMeansClusterer::runClustering()
     std::vector<int> usedImageIds;
     int numImages = images.size();
     int imageID;
+    srand(time(NULL)); //intialize random algorithm with "random" seed
     for (int i = 0; i < numClusters; i++)
     {
         do
@@ -207,34 +236,109 @@ void KMeansClusterer::runClustering()
         } while (find(usedImageIds.begin(), usedImageIds.end(), imageID) != usedImageIds.end());
 
         usedImageIds.push_back(imageID);
-        std::unique_ptr<Cluster> tempCluster(new Cluster(i));
+        std::unique_ptr<Cluster> tempCluster(new Cluster(i, images[imageID]));
+        images[imageID]->setClusterID(i);
         clusters.push_back(std::move(tempCluster));
-        clusters[i]->addClusterImage(images[imageID]);
     }
     std::cout << "clusters vector size: " << clusters.size() << std::endl;
 
     /*for (auto const &cluster : clusters)
     {
-        std::cout << "cluster:" << cluster->getID() << " size:" << cluster->getSize() << std::endl;
+        std::cout << "cluster:" << *cluster << " mean:" << cluster->getMean() << std::endl;
+    }
+
+    for (auto const &image : images)
+    {
+        std::cout << image->getImageName() << " \t" << image->getFeatureMean() << std::endl;
     }*/
 
     std::cout << "Running the K-Means Clustering Algorithm..." << std::endl;
 
     int iterationCount = 1;
+    /*
+    std::cout << "Iteration: " << iterationCount << std::endl;
+    for (auto const &cluster : clusters)
+    {
+        std::cout << *cluster << cluster->getMean() << std::endl;
+    }
+
+    //Assignment step - assign each observation to cluster with the nearest mean
+    for (int i = 0; i < numImages; i++)
+    {
+        int currentClusterID = images[i]->getClusterID();
+        int nearestClusterID = findNearestCluster(images[i]);
+
+        std::cout << images[i]->getImageName() << "\tfeature mean: " << images[i]->getFeatureMean() << " \tnearest cluster: " << nearestClusterID << std::endl;
+    }*/
+
     while (true)
     {
-        std::cout << "Iteration: " << iterationCount << std::endl;
+        std::cout << "Iteration: " << iterationCount << std::endl
+                  << std::endl;
+        for (auto const &cluster : clusters)
+        {
+            std::cout << *cluster; //<< cluster->getMean()[0] << std::endl;
+        }
         bool converged = true;
 
         //Assignment step - assign each observation to cluster with the nearest mean
+        for (int i = 0; i < numImages; i++)
+        {
+            int currentClusterID = images[i]->getClusterID();
+            int nearestClusterID = findNearestCluster(images[i]);
+
+            if (currentClusterID != nearestClusterID)
+            {
+                converged = false;
+
+                //if the image has already been assigned to a cluster
+                if (currentClusterID != -1)
+                {
+                    //remove it from the old cluster
+                    for (int cl = 0; cl < numClusters; cl++)
+                    {
+                        if (clusters[cl]->getID() == currentClusterID)
+                        {
+                            clusters[cl]->removeClusterImage(images[i]->getImgID());
+                        }
+                    }
+                }
+                //add the image to the new cluster
+                for (int cl = 0; cl < numClusters; cl++)
+                {
+                    if (clusters[cl]->getID() == nearestClusterID)
+                    {
+                        clusters[cl]->addClusterImage(images[i]);
+                    }
+                }
+                //update the image's cluster ID
+                images[i]->setClusterID(nearestClusterID);
+            }
+        }
 
         //Update step - recalculate the means of each cluster
+        for (int cl = 0; cl < numClusters; cl++)
+        {
+            clusters[cl]->setMean(clusters[cl]->calculateNewMean());
+        }
+
+        if (converged || iterationCount >= 50)
+        {
+            std::cout << std::endl
+                      << "Clustering completed in: " << iterationCount << " iterations." << std::endl;
+            for (auto const &cluster : clusters)
+            {
+                std::cout << *cluster;
+            }
+            break;
+        }
+        iterationCount++;
     }
 }
 
 //std::vector<u_char> KMeansClusterer::convertToGreyscale(std::vector<u_char> rgbValues) {}
 KMeansClusterer::~KMeansClusterer()
 {
-    std::cout << "KMeansClusterer destroyed." << std::endl;
+    //std::cout << "KMeansClusterer destroyed." << std::endl;
 }
 } // namespace CHNJAR003
