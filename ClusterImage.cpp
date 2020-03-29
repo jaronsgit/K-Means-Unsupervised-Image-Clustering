@@ -60,6 +60,7 @@ ClusterImage &ClusterImage::operator=(ClusterImage &&rhs)
 
 ClusterImage::~ClusterImage()
 {
+    std::cout << "ClusterImage: " << imgID << " destroyed." << std::endl;
     this->imageName = "";
     this->imgID = -1;
     this->binSize = -1;
