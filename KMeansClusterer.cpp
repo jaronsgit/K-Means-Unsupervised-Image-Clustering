@@ -6,6 +6,7 @@
 #include <sstream>
 #include <memory>
 #include <cmath>
+#include <algorithm>
 
 typedef unsigned char u_char;
 
@@ -17,7 +18,7 @@ namespace CHNJAR003
 KMeansClusterer::KMeansClusterer(const std::string &dataset, const std::string &output, const int numClusters, const int binSize) : datasetDir(dataset), outputFileName(output), numClusters(numClusters), binSize(binSize)
 {
     this->images = readInImages(datasetDir);
-
+    runClustering();
     /*for (auto const &image : images)
     {
         std::cout << image.use_count() << std::endl;
@@ -103,13 +104,14 @@ std::vector<std::shared_ptr<ClusterImage>> KMeansClusterer::readInImages(const s
                 u_char buffer[numBytes];
                 ppmFile.read((char *)buffer, numBytes); //buffer now stores RGB image data
 
-                std::vector<u_char> greyscaleP;
+                std::vector<u_char> rgbP(buffer, buffer + numBytes);
+                std::vector<u_char> greyscaleP = convertToGreyscale(rgbP);
 
-                for (int i = 0; i < numBytes / 3; i++)
+                /*for (int i = 0; i < numBytes / 3; i++)
                 {
                     u_char tempGreyPixel = 0.21 * buffer[i] + 0.72 * buffer[i + 1] + 0.07 * buffer[i + 2];
                     greyscaleP.push_back(tempGreyPixel);
-                }
+                }*/
 
                 //std::cout << id << std::endl;
                 //std::cout << fileName << std::endl;
@@ -175,6 +177,64 @@ int KMeansClusterer::findNearestCluster(std::shared_ptr<ClusterImage> image)
     return nearestClusterID;
 }
 
+std::vector<u_char> KMeansClusterer::convertToGreyscale(std::vector<u_char> rgbValues)
+{
+    std::vector<u_char> greyscaleP;
+
+    for (int i = 0; i < rgbValues.size() / 3; i++)
+    {
+        u_char tempGreyPixel = 0.21 * rgbValues[i] + 0.72 * rgbValues[i + 1] + 0.07 * rgbValues[i + 2];
+        greyscaleP.push_back(tempGreyPixel);
+    }
+
+    return greyscaleP;
+}
+
+void KMeansClusterer::runClustering()
+{
+
+    //Initialise the clusters
+    //Must initialise k=numClusters unique clusters
+    std::vector<int> usedImageIds;
+    int numImages = images.size();
+    int imageID;
+    for (int i = 0; i < numClusters; i++)
+    {
+        do
+        {
+            imageID = std::rand() % numImages;
+
+        } while (find(usedImageIds.begin(), usedImageIds.end(), imageID) != usedImageIds.end());
+
+        usedImageIds.push_back(imageID);
+        std::unique_ptr<Cluster> tempCluster(new Cluster(i));
+        clusters.push_back(std::move(tempCluster));
+        clusters[i]->addClusterImage(images[imageID]);
+    }
+    std::cout << "clusters vector size: " << clusters.size() << std::endl;
+
+    /*for (auto const &cluster : clusters)
+    {
+        std::cout << "cluster:" << cluster->getID() << " size:" << cluster->getSize() << std::endl;
+    }*/
+
+    std::cout << "Running the K-Means Clustering Algorithm..." << std::endl;
+
+    int iterationCount = 1;
+    while (true)
+    {
+        std::cout << "Iteration: " << iterationCount << std::endl;
+        bool converged = true;
+
+        //Assignment step - assign each observation to cluster with the nearest mean
+
+        //Update step - recalculate the means of each cluster
+    }
+}
+
 //std::vector<u_char> KMeansClusterer::convertToGreyscale(std::vector<u_char> rgbValues) {}
-KMeansClusterer::~KMeansClusterer() {}
+KMeansClusterer::~KMeansClusterer()
+{
+    std::cout << "KMeansClusterer destroyed." << std::endl;
+}
 } // namespace CHNJAR003

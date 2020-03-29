@@ -31,6 +31,8 @@ public:
 
     std::vector<std::shared_ptr<ClusterImage>> readInImages(const std::string &datasetDir);
     std::vector<u_char> convertToGreyscale(std::vector<u_char> rgbValues);
+    void runClustering();
+
     ~KMeansClusterer();
 
     friend std::ostream &operator<<(std::ostream &os, const KMeansClusterer &kt);
