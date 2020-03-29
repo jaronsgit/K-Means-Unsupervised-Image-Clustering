@@ -5,6 +5,11 @@
 namespace CHNJAR003
 {
 
+Cluster::Cluster(const int id)
+{
+    this->clusterID = id;
+}
+
 std::vector<float> Cluster::calculateNewMean(void) const
 {
     std::vector<float> tempMean(256 / images[0]->getBinSize()); //Based off the assumption that all the images have the same feature dimension
@@ -77,6 +82,11 @@ std::ostream &operator<<(std::ostream &os, const Cluster &ct)
     os << std::endl;
 
     return os;
+}
+
+Cluster::~Cluster()
+{
+    std::cout << "Cluster:" << clusterID << " destroyed." << std::endl;
 }
 
 } // namespace CHNJAR003

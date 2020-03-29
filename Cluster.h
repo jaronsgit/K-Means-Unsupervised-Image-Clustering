@@ -22,7 +22,9 @@ public:
     Cluster(Cluster &&rhs) = default;                 //move constructor
     Cluster &operator=(const Cluster &rhs) = default; //copy assignment operator
     Cluster &operator=(Cluster &&rhs) = default;      //move assignment operator
-    ~Cluster() = default;                             //destructor
+    ~Cluster();                                       //destructor
+
+    Cluster(const int id);
 
     std::vector<float> calculateNewMean(void) const;
     std::vector<float> getMean(void) const;
