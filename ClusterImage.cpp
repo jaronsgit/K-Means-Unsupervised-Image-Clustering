@@ -6,20 +6,28 @@ ClusterImage::ClusterImage()
 {
     this->imageName = "";
     this->imgID = -1;
+    this->clusterID = -1;
     this->binSize = -1;
 }
 
 ClusterImage::ClusterImage(const int id, const std::string &imageName, const int binSize, const std::vector<u_char> &greyscalePixels)
     : imgID(id), imageName(imageName), binSize(binSize), feature(extractFeature(binSize, greyscalePixels))
 {
-    /*this->imgID = id;
-    this->imageName = imageName;
-    this->binSize = binSize;
-    this->feature = extractFeature(binSize,greyscalePixels);*/
+    this->clusterID = -1; //not yet assigned to a cluster
+
+    double mean = 0.0;
+
+    for (int i = 0; i < feature.size(); i++)
+    {
+        mean += feature[i] * i;
+    }
+
+    this->featureMean = mean / feature.size();
 }
 
 ClusterImage::ClusterImage(const ClusterImage &rhs) : imgID(rhs.imgID), imageName(rhs.imageName), binSize(rhs.binSize), feature(rhs.feature)
 {
+    this->clusterID = rhs.clusterID;
 }
 
 ClusterImage::ClusterImage(ClusterImage &&rhs) : imgID(rhs.imgID), imageName(rhs.imageName), binSize(rhs.binSize), feature(std::move(rhs.feature))
@@ -27,6 +35,7 @@ ClusterImage::ClusterImage(ClusterImage &&rhs) : imgID(rhs.imgID), imageName(rhs
     rhs.imgID = -1;
     rhs.imageName = "";
     rhs.binSize = -1;
+    rhs.clusterID = -1;
 }
 
 ClusterImage &ClusterImage::operator=(const ClusterImage &rhs)
@@ -37,6 +46,7 @@ ClusterImage &ClusterImage::operator=(const ClusterImage &rhs)
         this->imgID = rhs.imgID;
         this->binSize = rhs.binSize;
         this->feature = rhs.feature;
+        this->clusterID = rhs.clusterID;
     }
 
     return *this;
@@ -50,20 +60,23 @@ ClusterImage &ClusterImage::operator=(ClusterImage &&rhs)
         this->imgID = rhs.imgID;
         this->binSize = rhs.binSize;
         this->feature = std::move(rhs.feature);
+        this->clusterID = rhs.clusterID;
 
         rhs.imgID = -1;
         rhs.imageName = "";
         rhs.binSize = -1;
+        rhs.clusterID = -1;
     }
     return *this;
 }
 
 ClusterImage::~ClusterImage()
 {
-    std::cout << "ClusterImage: " << imgID << " destroyed." << std::endl;
+    //std::cout << "ClusterImage: " << imgID << " destroyed." << std::endl;
     this->imageName = "";
     this->imgID = -1;
     this->binSize = -1;
+    this->clusterID = -1;
 
     feature.clear();
 }
@@ -98,9 +111,24 @@ std::vector<u_char> ClusterImage::getFeature() const
     return feature;
 }
 
+float ClusterImage::getFeatureMean() const
+{
+    return featureMean;
+}
+
 int ClusterImage::getBinSize() const
 {
     return binSize;
+}
+
+void ClusterImage::setClusterID(const int clusterID)
+{
+    this->clusterID = clusterID;
+}
+
+int ClusterImage::getClusterID(void) const
+{
+    return this->clusterID;
 }
 
 /*bool ClusterImage::setImageName(const std::string &imageName)

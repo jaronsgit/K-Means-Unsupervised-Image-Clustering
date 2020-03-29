@@ -9,9 +9,10 @@ class ClusterImage
 {
 private:
     std::string imageName;
-    int imgID;
+    int imgID, clusterID;
     int binSize;
     std::vector<u_char> feature; //histogram of intensity values
+    double featureMean;
 
 public:
     ClusterImage(void);                                                                                                      //default constructor
@@ -29,7 +30,11 @@ public:
     std::string getImageName() const;
     int getImgID() const;
     std::vector<u_char> getFeature() const;
+    float getFeatureMean() const;
     int getBinSize() const;
+
+    void setClusterID(const int clusterID);
+    int getClusterID(void) const;
 
     /*bool setImageName(const std::string &imageName);
     bool setImgID(const int id);
