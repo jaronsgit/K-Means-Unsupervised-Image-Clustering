@@ -14,6 +14,7 @@ class Cluster
 private:
     int clusterID;
     std::vector<float> mean;
+    //float mean;
     std::vector<std::shared_ptr<ClusterImage>> images;
 
 public:
@@ -24,11 +25,15 @@ public:
     Cluster &operator=(Cluster &&rhs) = default;      //move assignment operator
     ~Cluster();                                       //destructor
 
-    Cluster(const int id);
+    Cluster(const int id, const std::shared_ptr<ClusterImage> &cImgPtr);
 
     std::vector<float> calculateNewMean(void) const;
     std::vector<float> getMean(void) const;
     void setMean(std::vector<float> mean);
+    /*float calculateNewMean(void) const;
+    float getMean(void) const;
+    void setMean(const float mean);*/
+
     void clearCluster(void);                                            //clear the cluster of images
     void addClusterImage(const std::shared_ptr<ClusterImage> &cImgPtr); //Add an image to the cluster
     bool removeClusterImage(int imgID);

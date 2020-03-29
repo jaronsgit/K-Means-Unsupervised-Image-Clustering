@@ -5,14 +5,16 @@
 namespace CHNJAR003
 {
 
-Cluster::Cluster(const int id)
+Cluster::Cluster(const int id, const std::shared_ptr<ClusterImage> &cImgPtr)
 {
     this->clusterID = id;
+    this->addClusterImage(cImgPtr);
+    this->mean = calculateNewMean();
 }
 
 std::vector<float> Cluster::calculateNewMean(void) const
 {
-    std::vector<float> tempMean(256 / images[0]->getBinSize()); //Based off the assumption that all the images have the same feature dimension
+    std::vector<float> tempMean(256 / images[0]->getBinSize(), 0.0); //Based off the assumption that all the images have the same feature dimension
 
     //Can maybe replace this with a std::transform version later on
     for (auto const &img : images)
@@ -42,7 +44,27 @@ void Cluster::setMean(std::vector<float> mean)
 {
     this->mean = mean;
 }
+/*
+float Cluster::calculateNewMean(void) const
+{
+    float newMean = 0.0;
+    int numImages = images.size();
+    for (int i = 0; i < numImages; i++)
+    {
+        newMean += images[i]->getFeatureMean();
+    }
+    return newMean / numImages;
+}
 
+float Cluster::getMean(void) const
+{
+    return mean;
+}
+void Cluster::setMean(const float mean)
+{
+    this->mean = mean;
+}
+*/
 void Cluster::clearCluster(void)
 {
     this->images.clear();
@@ -86,7 +108,7 @@ std::ostream &operator<<(std::ostream &os, const Cluster &ct)
 
 Cluster::~Cluster()
 {
-    std::cout << "Cluster:" << clusterID << " destroyed." << std::endl;
+    //std::cout << "Cluster:" << clusterID << " destroyed." << std::endl;
 }
 
 } // namespace CHNJAR003
