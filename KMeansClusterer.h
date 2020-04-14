@@ -16,6 +16,7 @@ private:
     std::string outputFileName;
     int binSize;
     int numClusters;
+    bool useRGB;
     std::vector<std::shared_ptr<ClusterImage>> images;
     std::vector<std::unique_ptr<Cluster>> clusters;
 
@@ -27,7 +28,7 @@ public:
     KMeansClusterer(KMeansClusterer &&rhs) = default;
     KMeansClusterer &operator=(const KMeansClusterer &rhs) = delete;
     KMeansClusterer &operator=(KMeansClusterer &&rhs) = default;
-    KMeansClusterer(const std::string &dataset, const std::string &output, const int numClusters, const int binSize);
+    KMeansClusterer(const std::string &dataset, const std::string &output, const int numClusters, const int binSize, const bool colour);
 
     std::vector<std::shared_ptr<ClusterImage>> readInImages(const std::string &datasetDir);
     std::vector<u_char> convertToGreyscale(std::vector<u_char> rgbValues);
