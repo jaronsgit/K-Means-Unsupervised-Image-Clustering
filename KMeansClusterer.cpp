@@ -15,7 +15,7 @@ namespace CHNJAR003
 
 //KMeansClusterer::KMeansClusterer() {}
 
-KMeansClusterer::KMeansClusterer(const std::string &dataset, const std::string &output, const int numClusters, const int binSize) : datasetDir(dataset), outputFileName(output), numClusters(numClusters), binSize(binSize)
+KMeansClusterer::KMeansClusterer(const std::string &dataset, const std::string &output, const int numClusters, const int binSize, const bool colour) : datasetDir(dataset), outputFileName(output), numClusters(numClusters), binSize(binSize), useRGB(colour)
 {
     this->images = readInImages(datasetDir);
     runClustering();
@@ -109,8 +109,21 @@ std::vector<std::shared_ptr<ClusterImage>> KMeansClusterer::readInImages(const s
                 u_char buffer[numBytes];
                 ppmFile.read((char *)buffer, numBytes); //buffer now stores RGB image data
 
-                std::vector<u_char> rgbP(buffer, buffer + numBytes);
-                std::vector<u_char> greyscaleP = convertToGreyscale(rgbP);
+                std::vector<u_char> rgbP(buffer, buffer + numBytes); //vector now contains the RGB image data
+
+                if (!useRGB) //if color parameter was not used
+                {
+                    std::vector<u_char> greyscaleP = convertToGreyscale(rgbP); //vector now contains the greyscale image data
+                    std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>(id, fileName, binSize, greyscaleP, useRGB);
+                    id++;
+                    images.push_back(tempCIPtr);
+                }
+                else
+                { //if the color parameter was specified
+                    std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>(id, fileName, binSize, rgbP, useRGB);
+                    id++;
+                    images.push_back(tempCIPtr);
+                }
 
                 /*for (int i = 0; i < numBytes / 3; i++)
                 {
@@ -122,10 +135,6 @@ std::vector<std::shared_ptr<ClusterImage>> KMeansClusterer::readInImages(const s
                 //std::cout << fileName << std::endl;
                 //std::cout << binSize << std::endl;
                 //std::cout << greyscaleP.size() << std::endl;
-
-                std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>(id, fileName, binSize, greyscaleP);
-                id++;
-                images.push_back(tempCIPtr);
             }
             catch (const std::exception &e)
             {
@@ -155,7 +164,8 @@ int KMeansClusterer::findNearestCluster(std::shared_ptr<ClusterImage> image)
         tot += std::pow(tempMean[i] - tempFeature[i], 2.0);
     }
 
-    minEuclidDist = std::sqrt(tot);
+    //minEuclidDist = std::sqrt(tot);
+    minEuclidDist = tot;
     nearestClusterID = clusters[0]->getID();
 
     for (int i = 1; i < numClusters; i++)
@@ -170,7 +180,8 @@ int KMeansClusterer::findNearestCluster(std::shared_ptr<ClusterImage> image)
             tot += std::pow(tempMean[j] - tempFeature[j], 2.0);
         }
 
-        newEuclidDist = std::sqrt(tot);
+        //newEuclidDist = std::sqrt(tot);
+        newEuclidDist = tot;
 
         if (newEuclidDist < minEuclidDist)
         {

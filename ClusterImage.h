@@ -13,17 +13,18 @@ private:
     int binSize;
     std::vector<u_char> feature; //histogram of intensity values
     double featureMean;
+    bool useRGB;
 
 public:
-    ClusterImage(void);                                                                                                      //default constructor
-    ClusterImage(const int id, const std::string &imageName, const int binSize, const std::vector<u_char> &greyscalePixels); //paramterised constructor
-    ClusterImage(const ClusterImage &rhs);                                                                                   //copy constructor
-    ClusterImage(ClusterImage &&rhs);                                                                                        //move constructor
-    ClusterImage &operator=(const ClusterImage &rhs);                                                                        //copy assignment operator
-    ClusterImage &operator=(ClusterImage &&rhs);                                                                             //move assignment operator
-    ~ClusterImage();                                                                                                         //destructor
+    ClusterImage(void);                                                                                                                         //default constructor
+    ClusterImage(const int id, const std::string &imageName, const int binSize, const std::vector<u_char> &greyscalePixels, const bool colour); //paramterised constructor
+    ClusterImage(const ClusterImage &rhs);                                                                                                      //copy constructor
+    ClusterImage(ClusterImage &&rhs);                                                                                                           //move constructor
+    ClusterImage &operator=(const ClusterImage &rhs);                                                                                           //copy assignment operator
+    ClusterImage &operator=(ClusterImage &&rhs);                                                                                                //move assignment operator
+    ~ClusterImage();                                                                                                                            //destructor
 
-    std::vector<u_char> extractFeature(const int binSize, const std::vector<u_char> &greyscalePixels);
+    std::vector<u_char> extractFeature(const int binSize, const std::vector<u_char> &pixels, const bool colour);
 
     //u_char * extractFeature(const int binSize, const std::vector<u_char> &greyscalePixels);
 
