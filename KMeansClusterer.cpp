@@ -117,6 +117,19 @@ std::vector<std::shared_ptr<ClusterImage>> KMeansClusterer::readInImages(const s
                     std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>(id, fileName, binSize, greyscaleP, useRGB);
                     id++;
                     images.push_back(tempCIPtr);
+
+                    //TESTING
+                    if (fileName.compare("zero_9.ppm") == 0)
+                    {
+
+                        std::cout << tempCIPtr->getImageName() << " histogram:" << std::endl;
+                        std::cout << "[ ";
+                        for (int i = 0; i < tempCIPtr->getFeature().size(); i++)
+                        {
+                            std::cout << int(tempCIPtr->getFeature()[i]) << " ";
+                        }
+                        std::cout << " ]\n";
+                    }
                 }
                 else
                 { //if the color parameter was specified

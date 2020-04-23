@@ -21,7 +21,7 @@ clean:
 	#@rm unitTests
 	
 run:
-	./clusterer Gradient_Numbers_PPMS -o testoutput -k 10 -bin 2 -color
+	./clusterer Gradient_Numbers_PPMS -o testoutput -k 10 -bin 1
 
 run-tests:
 	./unitTests
