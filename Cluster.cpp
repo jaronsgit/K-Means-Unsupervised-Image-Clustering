@@ -19,7 +19,7 @@ std::vector<float> Cluster::calculateNewMean(void) const
     //Can maybe replace this with a std::transform version later on
     for (auto const &img : images)
     {
-        std::vector<u_char> tempFeature = img->getFeature();
+        std::vector<unsigned int> tempFeature = img->getFeature();
 
         for (int i = 0; i < tempFeature.size(); i++)
         {
