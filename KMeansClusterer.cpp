@@ -169,7 +169,7 @@ int KMeansClusterer::findNearestCluster(std::shared_ptr<ClusterImage> image)
     int nearestClusterID;
 
     std::vector<float> tempMean = clusters[0]->getMean();
-    std::vector<u_char> tempFeature = image->getFeature();
+    std::vector<unsigned int> tempFeature = image->getFeature();
 
     //calculate the euclidian distance of the point from the mean of the cluster
     for (int i = 0; i < 256 / binSize; i++)
@@ -229,13 +229,13 @@ int KMeansClusterer::findNearestCluster(std::shared_ptr<ClusterImage> image)
     return nearestClusterID;*/
 }
 
-std::vector<u_char> KMeansClusterer::convertToGreyscale(std::vector<u_char> rgbValues)
+std::vector<u_char> KMeansClusterer::convertToGreyscale(std::vector<u_char> rawRGBdata)
 {
     std::vector<u_char> greyscaleP;
 
-    for (int i = 0; i < rgbValues.size(); i += 3)
+    for (int i = 0; i < rawRGBdata.size(); i += 3)
     {
-        u_char tempGreyPixel = 0.21 * rgbValues[i] + 0.72 * rgbValues[i + 1] + 0.07 * rgbValues[i + 2];
+        u_char tempGreyPixel = 0.21 * rawRGBdata[i] + 0.72 * rawRGBdata[i + 1] + 0.07 * rawRGBdata[i + 2];
         greyscaleP.push_back(tempGreyPixel);
     }
 

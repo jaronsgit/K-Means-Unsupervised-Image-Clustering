@@ -31,7 +31,7 @@ public:
     KMeansClusterer(const std::string &dataset, const std::string &output, const int numClusters, const int binSize, const bool colour);
 
     std::vector<std::shared_ptr<ClusterImage>> readInImages(const std::string &datasetDir);
-    std::vector<u_char> convertToGreyscale(std::vector<u_char> rgbValues);
+    std::vector<u_char> convertToGreyscale(std::vector<u_char> rawRGBdata);
     void runClustering();
 
     ~KMeansClusterer();
