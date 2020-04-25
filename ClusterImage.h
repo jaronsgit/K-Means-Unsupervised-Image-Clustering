@@ -11,8 +11,7 @@ private:
     std::string imageName;
     int imgID, clusterID;
     int binSize;
-    std::vector<u_char> feature; //histogram of intensity values
-    double featureMean;
+    std::vector<unsigned int> feature; //histogram of intensity values
     bool useRGB;
 
 public:
@@ -24,14 +23,14 @@ public:
     ClusterImage &operator=(ClusterImage &&rhs);                                                                                                //move assignment operator
     ~ClusterImage();                                                                                                                            //destructor
 
-    std::vector<u_char> extractFeature(const int binSize, const std::vector<u_char> &pixels, const bool colour);
-
+    std::vector<unsigned int> extractFeatureFromGreyscale(const int binSize, const std::vector<u_char> &greyscalePixels);
+    std::vector<unsigned int> extractFeatureFromRawRGB(const int binSize, const std::vector<u_char> &rawRGBdata);
     //u_char * extractFeature(const int binSize, const std::vector<u_char> &greyscalePixels);
 
     std::string getImageName() const;
     int getImgID() const;
-    std::vector<u_char> getFeature() const;
-    float getFeatureMean() const;
+    std::vector<unsigned int> getFeature() const;
+    //float getFeatureMean() const;
     int getBinSize() const;
 
     void setClusterID(const int clusterID);
