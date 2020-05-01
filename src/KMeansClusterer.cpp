@@ -119,6 +119,7 @@ std::vector<std::shared_ptr<ClusterImage>> KMeansClusterer::readInImages(const s
                     images.push_back(tempCIPtr);
 
                     //TESTING
+                    /*
                     if (fileName.compare("zero_9.ppm") == 0)
                     {
 
@@ -129,7 +130,7 @@ std::vector<std::shared_ptr<ClusterImage>> KMeansClusterer::readInImages(const s
                             std::cout << int(tempCIPtr->getFeature()[i]) << " ";
                         }
                         std::cout << " ]\n";
-                    }
+                    }*/
                 }
                 else
                 { //if the color parameter was specified

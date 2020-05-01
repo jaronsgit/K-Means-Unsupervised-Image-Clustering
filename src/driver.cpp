@@ -24,12 +24,12 @@ int main(int argc, char *argv[])
             //std::cout << i << " : " << argv[i] << std::endl;
             if (std::string(argv[i]).compare("-o") == 0)
             {
-                std::cout << "-o : " << argv[i + 1] << std::endl;
+                //std::cout << "-o : " << argv[i + 1] << std::endl;
                 output = argv[i + 1];
             }
             else if (std::string(argv[i]).compare("-k") == 0)
             {
-                std::cout << "-k : " << argv[i + 1] << std::endl;
+                //std::cout << "-k : " << argv[i + 1] << std::endl;
 
                 try
                 {
@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
             }
             else if (std::string(argv[i]).compare("-bin") == 0)
             {
-                std::cout << "-bin : " << argv[i + 1] << std::endl;
+                //std::cout << "-bin : " << argv[i + 1] << std::endl;
 
                 try
                 {
@@ -55,8 +55,7 @@ int main(int argc, char *argv[])
             }
             else if (std::string(argv[i]).compare("-color") == 0)
             {
-                std::cout << "-color : "
-                          << "true" << std::endl;
+                //std::cout << "-color : " << "true" << std::endl;
                 colour = true;
             }
         }
