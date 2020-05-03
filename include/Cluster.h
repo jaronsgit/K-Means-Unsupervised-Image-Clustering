@@ -9,39 +9,42 @@
 namespace CHNJAR003
 {
 
-class Cluster
-{
-private:
-    int clusterID;
-    std::vector<float> mean;
-    //float mean;
-    std::vector<std::shared_ptr<ClusterImage>> images;
+    class Cluster
+    {
+    private:
+        int clusterID;
+        bool useRGB;
 
-public:
-    Cluster(void) = default;                          //default constructor
-    Cluster(const Cluster &rhs) = default;            //copy constructor
-    Cluster(Cluster &&rhs) = default;                 //move constructor
-    Cluster &operator=(const Cluster &rhs) = default; //copy assignment operator
-    Cluster &operator=(Cluster &&rhs) = default;      //move assignment operator
-    ~Cluster();                                       //destructor
+        std::vector<double> mean;
+        std::vector<double> rCentroid; //histogram of intensity values - used for greyscale
+        std::vector<double> gCentroid; //histogram of intensity values - used for greyscale
+        std::vector<double> bCentroid; //histogram of intensity values - used for greyscale
 
-    Cluster(const int id, const std::shared_ptr<ClusterImage> &cImgPtr);
+        std::vector<std::shared_ptr<ClusterImage>> images; //All the images assigned to the cluster
 
-    std::vector<float> calculateNewMean(void) const;
-    std::vector<float> getMean(void) const;
-    void setMean(std::vector<float> mean);
-    /*float calculateNewMean(void) const;
-    float getMean(void) const;
-    void setMean(const float mean);*/
+    public:
+        Cluster(void) = default;                          //default constructor
+        Cluster(const Cluster &rhs) = default;            //copy constructor
+        Cluster(Cluster &&rhs) = default;                 //move constructor
+        Cluster &operator=(const Cluster &rhs) = default; //copy assignment operator
+        Cluster &operator=(Cluster &&rhs) = default;      //move assignment operator
+        ~Cluster();                                       //destructor
 
-    void clearCluster(void);                                            //clear the cluster of images
-    void addClusterImage(const std::shared_ptr<ClusterImage> &cImgPtr); //Add an image to the cluster
-    bool removeClusterImage(int imgID);
-    int getID(void) const;
-    int getSize(void) const;
+        Cluster(const int id, const std::shared_ptr<ClusterImage> &cImgPtr, bool colour); //parameterised constructor - takes in its cluster id number as well as an initial clusterImage
 
-    friend std::ostream &operator<<(std::ostream &os, const Cluster &ct);
-};
+        std::vector<float> calculateNewMean(void) const;
+        void recalculateCentroid(void);
+        const std::vector<std::vector<double>> getMean(void) const;
+        //void setMean(const std::vector<double> &mean);
+
+        void clearCluster(void);                                            //clear the cluster of images
+        void addClusterImage(const std::shared_ptr<ClusterImage> &cImgPtr); //Add an image to the cluster
+        bool removeClusterImage(const int imgID);
+        int getID(void) const;
+        int getSize(void) const;
+
+        friend std::ostream &operator<<(std::ostream &os, const Cluster &ct);
+    };
 
 } // namespace CHNJAR003
 

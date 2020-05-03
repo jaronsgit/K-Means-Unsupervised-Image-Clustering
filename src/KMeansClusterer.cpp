@@ -6,6 +6,7 @@
 #include <sstream>
 #include <memory>
 #include <cmath>
+#include <iterator>
 #include <algorithm>
 
 typedef unsigned char u_char;
@@ -13,200 +14,320 @@ typedef unsigned char u_char;
 namespace CHNJAR003
 {
 
-//KMeansClusterer::KMeansClusterer() {}
-
-KMeansClusterer::KMeansClusterer(const std::string &dataset, const std::string &output, const int numClusters, const int binSize, const bool colour) : datasetDir(dataset), outputFileName(output), numClusters(numClusters), binSize(binSize), useRGB(colour)
-{
-    this->images = readInImages(datasetDir);
-    runClustering();
-    /*for (auto const &image : images)
+    KMeansClusterer::KMeansClusterer(const std::string &dataset, const std::string &output, const int numClusters, const int binSize, const bool colour, const bool complex) : datasetDir(dataset), outputFileName(output), numClusters(numClusters), binSize(binSize), useRGB(colour), useComplexFeature(complex)
     {
-        std::vector<u_char> tempFeature = image->getFeature();
-        std::cout << "[";
-        for (auto const &bin : tempFeature)
-        {
-            std::cout << int(bin) << ", ";
-        }
-        std::cout << "]" << std::endl;
-    }*/
-}
+        this->images = readInImages(datasetDir);
+        runClustering();
+    }
 
-std::vector<std::shared_ptr<ClusterImage>> KMeansClusterer::readInImages(const std::string &datasetDir)
-{
-
-    std::vector<std::shared_ptr<ClusterImage>> images;
-
-    std::vector<std::string> fileNames;
-
-    DIR *dir;
-    struct dirent *ent;
-    if ((dir = opendir(datasetDir.c_str())) != NULL)
+    std::vector<std::shared_ptr<ClusterImage>> KMeansClusterer::readInImages(const std::string &datasetDir)
     {
-        /* print all the files and directories within directory */
-        std::cout << "Extracting PPM file names from directory..." << std::endl;
-        std::string tempName;
-        while ((ent = readdir(dir)) != NULL)
+
+        std::vector<std::shared_ptr<ClusterImage>> images;
+
+        std::vector<std::string> fileNames;
+
+        /*DIR *dir;
+        struct dirent *ent;
+        if ((dir = opendir(datasetDir.c_str())) != NULL)
         {
-            //printf("%s\n", ent->d_name);
-            //std::cout << ent->d_type << std::endl;
-            tempName = ent->d_name;
-            if (tempName.find(".ppm") != std::string::npos)
+            // print all the files and directories within directory 
+            std::cout << "Extracting PPM file names from directory..." << std::endl;
+            std::string tempName;
+            while ((ent = readdir(dir)) != NULL)
             {
-                //std::cout << ent->d_name << std::endl;
-                fileNames.push_back(tempName);
+                //printf("%s\n", ent->d_name);
+                //std::cout << ent->d_type << std::endl;
+                tempName = ent->d_name;
+                if (tempName.find(".ppm") != std::string::npos)
+                {
+                    //std::cout << ent->d_name << std::endl;
+                    fileNames.push_back(tempName);
+                }
+            }
+            closedir(dir);
+        }
+        else
+        {
+            // could not open directory 
+            perror("");
+        }*/
+        /////////////////
+        char buffer[128];
+        std::string commandOutput = "";
+
+        FILE *pipe = popen(("ls " + datasetDir).c_str(), "r");
+        if (!pipe)
+        {
+            std::cout << "popen command failed." << std::endl;
+        }
+
+        while (!feof(pipe))
+        {
+            //Read from the buffer
+            if (fgets(buffer, 128, pipe) != NULL)
+            {
+                commandOutput = std::string(buffer);
+                int len = commandOutput.size();
+                fileNames.push_back(commandOutput.erase(len - 1, 1));
+                //std::cout << std::string(buffer);
             }
         }
-        closedir(dir);
-    }
-    else
-    {
-        /* could not open directory */
-        perror("");
-    }
-    int id = 0;
 
-    std::ifstream ppmFile;
-    std::string tempLine;
-    std::cout << "Reading in the PPM files..." << std::endl;
-    for (auto const fileName : fileNames)
-    {
-        //std::cout << fileName << std::endl;
-        ppmFile.open(datasetDir + "/" + fileName.c_str(), std::ios::in | std::ios::binary);
+        pclose(pipe);
+        //////////////
+        int id = 0;
 
-        std::vector<std::string> tempLines;
-        if (ppmFile.is_open())
+        std::ifstream ppmFile;
+        std::string tempLine;
+        std::cout << "Reading in the PPM files..." << std::endl;
+        for (auto const fileName : fileNames)
         {
+            ppmFile.open(datasetDir + "/" + fileName.c_str(), std::ios::in | std::ios::binary);
 
-            ppmFile >> tempLine; //should read the "magic number" i.e. P6
-            //std::cout << tempLine << std::endl;
-
-            getline(ppmFile, tempLine);
-            //std::cout << tempLine << std::endl;
-            while (tempLine.compare("255") != 0)
+            std::vector<std::string> tempLines;
+            if (ppmFile.is_open())
             {
-                tempLines.push_back(tempLine);
+
+                ppmFile >> tempLine; //should read the "magic number" i.e. P6
+
                 getline(ppmFile, tempLine);
-                //std::cout << tempLine << std::endl;
-            }
 
-            /*for (auto const &line : tempLines)
-            {
-                std::cout << line << std::endl;
-            }*/
-
-            try
-            {
-                std::istringstream ss(tempLines.back());
-                std::string token;
-                getline(ss, token, ' ');
-                int Nrows = std::stoi(token);
-                getline(ss, token, ' ');
-                int Ncols = std::stoi(token);
-
-                //std::cout << "rows: " << Nrows << " cols: " << Ncols << std::endl;
-
-                int numBytes = Nrows * Ncols * 3;
-                u_char buffer[numBytes];
-                ppmFile.read((char *)buffer, numBytes); //buffer now stores RGB image data
-
-                std::vector<u_char> rgbP(buffer, buffer + numBytes); //vector now contains the RGB image data
-
-                if (!useRGB) //if color parameter was not used
+                while (tempLine.compare("255") != 0)
                 {
-                    std::vector<u_char> greyscaleP = convertToGreyscale(rgbP); //vector now contains the greyscale image data
-                    std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>(id, fileName, binSize, greyscaleP, useRGB);
-                    id++;
-                    images.push_back(tempCIPtr);
+                    tempLines.push_back(tempLine);
+                    getline(ppmFile, tempLine);
+                }
 
-                    //TESTING
-                    /*
-                    if (fileName.compare("zero_9.ppm") == 0)
+                try
+                {
+                    std::istringstream ss(tempLines.back());
+                    std::string token;
+                    getline(ss, token, ' ');
+                    int Nrows = std::stoi(token);
+                    getline(ss, token, ' ');
+                    int Ncols = std::stoi(token);
+
+                    //std::cout << "rows: " << Nrows << " cols: " << Ncols << std::endl;
+
+                    int numBytes = Nrows * Ncols * 3;
+                    u_char buffer[numBytes];
+                    ppmFile.read((char *)buffer, numBytes); //buffer now stores RGB image data
+
+                    std::vector<u_char> rgbP(buffer, buffer + numBytes); //vector now contains the RGB image data
+
+                    if (!useRGB && !useComplexFeature) //if color parameter was not used and complex feature not requested
                     {
+                        std::vector<u_char> greyscaleP = convertToGreyscale(rgbP); //vector now contains the greyscale image data
+                        std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>(id, fileName, binSize, greyscaleP, useRGB);
+                        id++;
+                        images.push_back(tempCIPtr);
 
-                        std::cout << tempCIPtr->getImageName() << " histogram:" << std::endl;
-                        std::cout << "[ ";
-                        for (int i = 0; i < tempCIPtr->getFeature().size(); i++)
+                        //TESTING
+
+                        //if (fileName.compare("zero_9.ppm") == 0)
+                        //{
+                        /*
+                        std::vector<u_char> convolvedImg = applyConvolution(rgbP, Nrows, Ncols);
+
+                        std::ofstream outputConvolve;
+                        outputConvolve.open(("convolvedImages/" + fileName).c_str(), std::ios::out | std::ios::binary);
+                        outputConvolve << "P6" << std::endl
+                                       << Ncols << std::endl
+                                       << Nrows << std::endl
+                                       << 255 << std::endl;
+
+                        for (int i = 0; i < convolvedImg.size(); i += 3)
                         {
-                            std::cout << int(tempCIPtr->getFeature()[i]) << " ";
+                            char data[3] = {char(convolvedImg[i]), char(convolvedImg[i + 1]), char(convolvedImg[i + 2])}; //all the same value
+                            outputConvolve.write(data, 3);
                         }
-                        std::cout << " ]\n";
-                    }*/
-                }
-                else
-                { //if the color parameter was specified
-                    std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>(id, fileName, binSize, rgbP, useRGB);
-                    id++;
-                    images.push_back(tempCIPtr);
-                }
 
-                /*for (int i = 0; i < numBytes / 3; i++)
+                        outputConvolve.close();*/
+                        /*std::vector<u_char> edgeImg = detectImageEdges(greyscaleP, Nrows, Ncols);
+
+                        std::ofstream outputGreyscale;
+                        outputGreyscale.open(("edgeImages/" + fileName).c_str(), std::ios::out | std::ios::binary);
+                        outputGreyscale << "P6" << std::endl
+                                        << Ncols << std::endl
+                                        << Nrows << std::endl
+                                        << 255 << std::endl;
+                        for (auto const &pixel : edgeImg)
+                        {
+                            char data[3] = {char(pixel), char(pixel), char(pixel)}; //all the same value
+                            outputGreyscale.write(data, 3);
+                        }
+                        outputGreyscale.close();*/
+
+                        /*std::cout << tempCIPtr->getImageName() << " histogram:" << std::endl;
+                            std::cout << "[ ";
+                            std::copy(tempCIPtr->getFeature().begin(), tempCIPtr->getFeature().end(), std::ostream_iterator<unsigned int>(std::cout, ", "));
+                            std::cout << " ]\n";*/
+
+                        /*std::vector<u_char> thresholdedImg = thresholdGreyscaleImage(greyscaleP);
+
+                        std::ofstream outputGreyscale;
+                        outputGreyscale.open(("thresholdedImages/" + fileName).c_str(), std::ios::out | std::ios::binary);
+                        outputGreyscale << "P6" << std::endl
+                                        << Ncols << std::endl
+                                        << Nrows << std::endl
+                                        << 255 << std::endl;
+                        for (auto const &pixel : thresholdedImg)
+                        {
+                            char data[3] = {char(pixel), char(pixel), char(pixel)}; //all the same value
+                            outputGreyscale.write(data, 3);
+                        }
+                        outputGreyscale.close();
+
+                        if (fileName.compare("zero_1.ppm") == 0)
+                        {
+                            std::ofstream outputGreyscale;
+                            outputGreyscale.open("zero1grey.ppm", std::ios::out | std::ios::binary);
+                            outputGreyscale << "P6" << std::endl
+                                            << Ncols << std::endl
+                                            << Nrows << std::endl
+                                            << 255 << std::endl;
+                            for (auto const &pixel : greyscaleP)
+                            {
+                                char data[3] = {char(pixel), char(pixel), char(pixel)}; //all the same value
+                                outputGreyscale.write(data, 3);
+                            }
+                            outputGreyscale.close();
+                        }*/
+
+                        //}
+                    }
+                    else if (useRGB && !useComplexFeature)
+                    { //if the color parameter was specified and complex feature not requested
+                        std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>(id, fileName, binSize, rgbP, useRGB);
+                        id++;
+                        images.push_back(tempCIPtr);
+                    }
+                    else if (useComplexFeature) //if complex feature was requested
+                    {
+                    }
+                }
+                catch (const std::exception &e)
                 {
-                    u_char tempGreyPixel = 0.21 * buffer[i] + 0.72 * buffer[i + 1] + 0.07 * buffer[i + 2];
-                    greyscaleP.push_back(tempGreyPixel);
-                }*/
+                    std::cerr << e.what() << '\n';
+                }
 
-                //std::cout << id << std::endl;
-                //std::cout << fileName << std::endl;
-                //std::cout << binSize << std::endl;
-                //std::cout << greyscaleP.size() << std::endl;
+                ppmFile.close();
             }
-            catch (const std::exception &e)
+        }
+        //std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>();
+        std::cout << "Finished reading and processing of PPM files." << std::endl;
+        return images;
+    }
+
+    int KMeansClusterer::findNearestCluster(std::shared_ptr<ClusterImage> image)
+    {
+        if (!useRGB)
+        {
+            double tot = 0.0, minEuclidDist;
+
+            int nearestClusterID;
+
+            std::vector<double> tempMean = clusters[0]->getMean()[0];
+            std::vector<unsigned int> tempFeature = image->getFeature()[0];
+
+            //Calculate the Euclidian distance from the first cluster
+            for (int i = 0; i < 256 / binSize; i++)
             {
-                std::cerr << e.what() << '\n';
+                tot += std::pow(tempMean[i] - tempFeature[i], 2.0);
             }
 
-            ppmFile.close();
+            //minEuclidDist = std::sqrt(tot);
+            minEuclidDist = tot;
+            nearestClusterID = clusters[0]->getID();
+            //Calculate Euclidiant distances to other clusters
+            for (int i = 1; i < numClusters; i++)
+            {
+                double newEuclidDist;
+                tot = 0.0;
+
+                std::vector<double> tempMean = clusters[i]->getMean()[0];
+
+                for (int j = 0; j < 256 / binSize; j++)
+                {
+                    tot += std::pow(tempMean[j] - tempFeature[j], 2.0);
+                }
+
+                //newEuclidDist = std::sqrt(tot);
+                newEuclidDist = tot;
+
+                if (newEuclidDist < minEuclidDist)
+                {
+                    minEuclidDist = newEuclidDist;
+                    nearestClusterID = clusters[i]->getID();
+                }
+            }
+
+            return nearestClusterID;
         }
-    }
-    //std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>();
-    std::cout << "Finished reading and processing of PPM files." << std::endl;
-    return images;
-}
-
-int KMeansClusterer::findNearestCluster(std::shared_ptr<ClusterImage> image)
-{
-    double tot = 0.0, minEuclidDist;
-
-    int nearestClusterID;
-
-    std::vector<float> tempMean = clusters[0]->getMean();
-    std::vector<unsigned int> tempFeature = image->getFeature();
-
-    //calculate the euclidian distance of the point from the mean of the cluster
-    for (int i = 0; i < 256 / binSize; i++)
-    {
-        tot += std::pow(tempMean[i] - tempFeature[i], 2.0);
-    }
-
-    //minEuclidDist = std::sqrt(tot);
-    minEuclidDist = tot;
-    nearestClusterID = clusters[0]->getID();
-
-    for (int i = 1; i < numClusters; i++)
-    {
-        double newEuclidDist;
-        tot = 0.0;
-
-        std::vector<float> tempMean = clusters[i]->getMean();
-
-        for (int j = 0; j < 256 / binSize; j++)
+        else
         {
-            tot += std::pow(tempMean[j] - tempFeature[j], 2.0);
+            //std::cout << "About to find nearest cluster..." << std::endl;
+            double tot = 0.0, minEuclidDist;
+            int nearestClusterID;
+
+            //std::cout << "Getting first cluster centroids..." << std::endl;
+            std::vector<std::vector<double>> centroids = clusters[0]->getMean();
+            std::vector<double> clusterRcentroid = centroids[0];
+            std::vector<double> clusterGcentroid = centroids[1];
+            std::vector<double> clusterBcentroid = centroids[2];
+            //std::cout << "Getting image features..." << std::endl;
+            std::vector<std::vector<unsigned int>> features = image->getFeature();
+            std::vector<unsigned int> imageRfeature = features[0];
+            std::vector<unsigned int> imageGfeature = features[1];
+            std::vector<unsigned int> imageBfeature = features[2];
+
+            //Calculate the Euclidian distance from the first cluster
+            //std::cout << "Calculating first distance..." << std::endl;
+            //std::cout << "clusterCentroid size:\t" << clusterRcentroid.size() << std::endl;
+            //std::cout << "imageFeature size:\t" << imageRfeature.size() << std::endl;
+            for (int i = 0; i < clusterRcentroid.size(); i++)
+            {
+                tot += std::pow(clusterRcentroid[i] - imageRfeature[i], 2.0);
+                tot += std::pow(clusterGcentroid[i] - imageGfeature[i], 2.0);
+                tot += std::pow(clusterBcentroid[i] - imageBfeature[i], 2.0);
+            }
+
+            //minEuclidDist = std::sqrt(tot);
+            minEuclidDist = tot;
+            nearestClusterID = clusters[0]->getID();
+            //std::cout << "Calculating other distances..." << std::endl;
+            //Calculate Euclidian distances to other clusters
+            for (int i = 1; i < numClusters; i++)
+            {
+                double newEuclidDist;
+                tot = 0.0;
+
+                std::vector<std::vector<double>> centroids = clusters[i]->getMean();
+                std::vector<double> clusterRcentroid = centroids[0];
+                std::vector<double> clusterGcentroid = centroids[1];
+                std::vector<double> clusterBcentroid = centroids[2];
+                for (int j = 0; j < 256 / binSize; j++)
+                {
+                    tot += std::pow(clusterRcentroid[j] - imageRfeature[j], 2.0);
+                    tot += std::pow(clusterGcentroid[j] - imageGfeature[j], 2.0);
+                    tot += std::pow(clusterBcentroid[j] - imageBfeature[j], 2.0);
+                }
+
+                //newEuclidDist = std::sqrt(tot);
+                newEuclidDist = tot;
+
+                if (newEuclidDist < minEuclidDist)
+                {
+                    minEuclidDist = newEuclidDist;
+                    nearestClusterID = clusters[i]->getID();
+                }
+            }
+
+            return nearestClusterID;
         }
 
-        //newEuclidDist = std::sqrt(tot);
-        newEuclidDist = tot;
-
-        if (newEuclidDist < minEuclidDist)
-        {
-            minEuclidDist = newEuclidDist;
-            nearestClusterID = clusters[i]->getID();
-        }
-    }
-
-    return nearestClusterID;
-
-    /*
+        /*
     float imageMean = image->getFeatureMean();
     float clusterMean = clusters[0]->getMean();
     int nearestClusterID = clusters[0]->getID();
@@ -228,46 +349,47 @@ int KMeansClusterer::findNearestCluster(std::shared_ptr<ClusterImage> image)
     }
 
     return nearestClusterID;*/
-}
-
-std::vector<u_char> KMeansClusterer::convertToGreyscale(std::vector<u_char> rawRGBdata)
-{
-    std::vector<u_char> greyscaleP;
-
-    for (int i = 0; i < rawRGBdata.size(); i += 3)
-    {
-        u_char tempGreyPixel = 0.21 * rawRGBdata[i] + 0.72 * rawRGBdata[i + 1] + 0.07 * rawRGBdata[i + 2];
-        greyscaleP.push_back(tempGreyPixel);
     }
 
-    return greyscaleP;
-}
-
-void KMeansClusterer::runClustering()
-{
-
-    //Initialise the clusters
-    //Must initialise k=numClusters unique clusters
-    std::vector<int> usedImageIds;
-    int numImages = images.size();
-    int imageID;
-    srand(time(NULL)); //intialize random algorithm with "random" seed
-    for (int i = 0; i < numClusters; i++)
+    const std::vector<u_char> KMeansClusterer::convertToGreyscale(const std::vector<u_char> &rawRGBdata)
     {
-        do
+        std::vector<u_char> greyscaleP;
+
+        for (int i = 0; i < rawRGBdata.size(); i += 3)
         {
-            imageID = std::rand() % numImages;
+            u_char tempGreyPixel = 0.21 * rawRGBdata[i] + 0.72 * rawRGBdata[i + 1] + 0.07 * rawRGBdata[i + 2];
+            greyscaleP.push_back(tempGreyPixel);
+        }
 
-        } while (find(usedImageIds.begin(), usedImageIds.end(), imageID) != usedImageIds.end());
-
-        usedImageIds.push_back(imageID);
-        std::unique_ptr<Cluster> tempCluster(new Cluster(i, images[imageID]));
-        images[imageID]->setClusterID(i);
-        clusters.push_back(std::move(tempCluster));
+        return greyscaleP;
     }
-    std::cout << "clusters vector size: " << clusters.size() << std::endl;
 
-    /*for (auto const &cluster : clusters)
+    void KMeansClusterer::runClustering()
+    {
+
+        //Initialise the clusters
+        //Must initialise k=numClusters unique clusters
+        std::vector<int> usedImageIds;
+        int numImages = images.size();
+        int imageID;
+        srand(time(NULL)); //intialize random algorithm with "random" seed
+
+        for (int i = 0; i < numClusters; i++)
+        {
+            do
+            {
+                imageID = std::rand() % numImages;
+
+            } while (find(usedImageIds.begin(), usedImageIds.end(), imageID) != usedImageIds.end());
+
+            usedImageIds.push_back(imageID);
+            std::unique_ptr<Cluster> tempCluster(new Cluster(i, images[imageID], useRGB));
+            images[imageID]->setClusterID(i);
+            clusters.push_back(std::move(tempCluster));
+        }
+        std::cout << "clusters vector size: " << clusters.size() << std::endl;
+
+        /*for (auto const &cluster : clusters)
     {
         std::cout << "cluster:" << *cluster << " mean:" << cluster->getMean() << std::endl;
     }
@@ -277,10 +399,10 @@ void KMeansClusterer::runClustering()
         std::cout << image->getImageName() << " \t" << image->getFeatureMean() << std::endl;
     }*/
 
-    std::cout << "Running the K-Means Clustering Algorithm..." << std::endl;
+        std::cout << "Running the K-Means Clustering Algorithm..." << std::endl;
 
-    int iterationCount = 1;
-    /*
+        int iterationCount = 1;
+        /*
     std::cout << "Iteration: " << iterationCount << std::endl;
     for (auto const &cluster : clusters)
     {
@@ -296,74 +418,277 @@ void KMeansClusterer::runClustering()
         std::cout << images[i]->getImageName() << "\tfeature mean: " << images[i]->getFeatureMean() << " \tnearest cluster: " << nearestClusterID << std::endl;
     }*/
 
-    while (true)
-    {
-        std::cout << "Iteration: " << iterationCount << std::endl
-                  << std::endl;
-        for (auto const &cluster : clusters)
+        while (true)
         {
-            std::cout << *cluster; //<< cluster->getMean()[0] << std::endl;
-        }
-        bool converged = true;
-
-        //Assignment step - assign each observation to cluster with the nearest mean
-        for (int i = 0; i < numImages; i++)
-        {
-            int currentClusterID = images[i]->getClusterID();
-            int nearestClusterID = findNearestCluster(images[i]);
-
-            if (currentClusterID != nearestClusterID)
-            {
-                converged = false;
-
-                //if the image has already been assigned to a cluster
-                if (currentClusterID != -1)
-                {
-                    //remove it from the old cluster
-                    for (int cl = 0; cl < numClusters; cl++)
-                    {
-                        if (clusters[cl]->getID() == currentClusterID)
-                        {
-                            clusters[cl]->removeClusterImage(images[i]->getImgID());
-                        }
-                    }
-                }
-                //add the image to the new cluster
-                for (int cl = 0; cl < numClusters; cl++)
-                {
-                    if (clusters[cl]->getID() == nearestClusterID)
-                    {
-                        clusters[cl]->addClusterImage(images[i]);
-                    }
-                }
-                //update the image's cluster ID
-                images[i]->setClusterID(nearestClusterID);
-            }
-        }
-
-        //Update step - recalculate the means of each cluster
-        for (int cl = 0; cl < numClusters; cl++)
-        {
-            clusters[cl]->setMean(clusters[cl]->calculateNewMean());
-        }
-
-        if (converged || iterationCount >= 50)
-        {
-            std::cout << std::endl
-                      << "Clustering completed in: " << iterationCount << " iterations." << std::endl;
+            std::cout << "Iteration: " << iterationCount << std::endl
+                      << std::endl;
             for (auto const &cluster : clusters)
             {
-                std::cout << *cluster;
+                std::cout << *cluster; //<< cluster->getMean()[0] << std::endl;
             }
-            break;
-        }
-        iterationCount++;
-    }
-}
+            bool converged = true;
 
-//std::vector<u_char> KMeansClusterer::convertToGreyscale(std::vector<u_char> rgbValues) {}
-KMeansClusterer::~KMeansClusterer()
-{
-    //std::cout << "KMeansClusterer destroyed." << std::endl;
-}
+            //Assignment step - assign each observation to cluster with the nearest mean
+            for (int i = 0; i < numImages; i++)
+            {
+                int currentClusterID = images[i]->getClusterID();
+                int nearestClusterID = findNearestCluster(images[i]);
+
+                if (currentClusterID != nearestClusterID)
+                {
+                    converged = false;
+
+                    //if the image has already been assigned to a cluster
+                    if (currentClusterID != -1)
+                    {
+                        //remove it from the old cluster
+                        for (int cl = 0; cl < numClusters; cl++)
+                        {
+                            if (clusters[cl]->getID() == currentClusterID)
+                            {
+                                clusters[cl]->removeClusterImage(images[i]->getImgID());
+                            }
+                        }
+                    }
+                    //add the image to the new cluster
+                    for (int cl = 0; cl < numClusters; cl++)
+                    {
+                        if (clusters[cl]->getID() == nearestClusterID)
+                        {
+                            clusters[cl]->addClusterImage(images[i]);
+                        }
+                    }
+                    //update the image's cluster ID
+                    images[i]->setClusterID(nearestClusterID);
+                }
+            }
+
+            //Update step - recalculate the means of each cluster
+            for (int cl = 0; cl < numClusters; cl++)
+            {
+                //clusters[cl]->setMean(clusters[cl]->calculateNewMean());
+                clusters[cl]->recalculateCentroid();
+            }
+
+            if (converged || iterationCount >= 50) //max iteration count of 50
+            {
+                std::cout << std::endl
+                          << "Clustering completed in: " << iterationCount << " iterations." << std::endl;
+                for (auto const &cluster : clusters)
+                {
+                    std::cout << *cluster;
+                }
+                break;
+            }
+            iterationCount++;
+        }
+    }
+
+    const std::vector<u_char> KMeansClusterer::thresholdGreyscaleImage(const std::vector<u_char> &greyscalePixels)
+    {
+        std::vector<unsigned int> histogram(256, 0);
+        try
+        {
+            for (auto const &pixel : greyscalePixels)
+            {
+                histogram[pixel] += 1;
+            }
+
+            /*std::cout << "[ ";
+            std::copy(histogram.begin(), histogram.end(), std::ostream_iterator<unsigned int>(std::cout, ", "));
+            std::cout << " ]\n";*/
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << e.what() << '\n';
+        }
+
+        std::vector<u_char> thresholdPixels;
+        long numPixels = greyscalePixels.size();
+        //std::cout << "numPixels=" << numPixels << std::endl;
+
+        int classProb1 = 0, classProb2 = 0;
+        float sumForeground = 0;
+        float sumBackground = 0;
+        int weightBackground = 0;
+        int weightForeground = 0;
+        float maxBetweenVariance = 0;
+        int thresholdBin = 0;
+
+        for (int i = 0; i < histogram.size(); i++)
+        {
+            sumForeground += i * int(histogram[i]);
+        }
+
+        for (int i = 0; i < histogram.size(); i++)
+        {
+            weightBackground += int(histogram[i]);
+            if (weightBackground == 0)
+            {
+                continue;
+            }
+            weightForeground = numPixels - weightBackground;
+
+            if (weightForeground == 0)
+            {
+                break;
+            }
+
+            sumBackground += float(i * int(histogram[i]));
+
+            float meanBackground = sumBackground / weightBackground;
+            float meanForeground = (sumForeground - sumBackground) / weightForeground;
+
+            float betweenClassVariance = weightBackground * weightForeground * std::pow((meanBackground - meanForeground), 2.0);
+
+            if (betweenClassVariance > maxBetweenVariance)
+            {
+                maxBetweenVariance = betweenClassVariance;
+                thresholdBin = i;
+            }
+        }
+
+        for (int i = 0; i < greyscalePixels.size(); i++)
+        {
+            if (greyscalePixels[i] > thresholdBin)
+            {
+                thresholdPixels.push_back(255);
+            }
+            else
+            {
+                thresholdPixels.push_back(0);
+            }
+        }
+
+        return thresholdPixels;
+    }
+
+    const std::vector<u_char> KMeansClusterer::detectImageEdges(const std::vector<u_char> &greyscalePixels, int numRows, int numCols)
+    {
+        std::vector<u_char> edgeImage;
+
+        unsigned int Gx[3][3];
+        unsigned int Gy[3][3];
+
+        //SOBEL Horizontal Mask
+        Gx[0][0] = 1;
+        Gx[0][1] = 0;
+        Gx[0][2] = -1;
+        Gx[1][0] = 2;
+        Gx[1][1] = 0;
+        Gx[1][2] = -2;
+        Gx[2][0] = 1;
+        Gx[2][1] = 0;
+        Gx[2][2] = -1;
+
+        //SOBEL Vertical Mask
+        Gy[0][0] = 1;
+        Gy[0][1] = 2;
+        Gy[0][2] = 1;
+        Gy[1][0] = 0;
+        Gy[1][1] = 0;
+        Gy[1][2] = 0;
+        Gy[2][0] = -1;
+        Gy[2][1] = -2;
+        Gy[2][2] = -1;
+
+        int gx = 0, gy = 0;
+
+        for (int i = 0; i < greyscalePixels.size(); i++)
+        {
+            int x = i % numCols;
+            int y = i / numRows;
+
+            //if on one of the edges of the image
+            if ((x == 0) || (x == numRows - 1) || (y == 0) || (y == numRows - 1))
+            {
+                gx = 0, gy = 0;
+            }
+            else
+            {
+                gx = 0, gy = 0;
+                for (int dx = -1; dx <= 1; ++dx)
+                {
+                    for (int dy = -1; dy <= 1; ++dy)
+                    {
+
+                        gx = gx + Gx[1 + dx][1 + dy] * greyscalePixels[i + dx + (dy * numRows)];
+                        gy = gy + Gy[1 + dx][1 + dy] * greyscalePixels[i + dx + (dy * numRows)];
+                    }
+                }
+            }
+
+            edgeImage.push_back(std::sqrt(gx * gx + gy * gy));
+        }
+        return edgeImage;
+    }
+
+    const std::vector<u_char> KMeansClusterer::applyConvolution(const std::vector<u_char> &rgbPixels, int numRows, int numCols)
+    {
+        std::vector<u_char> rPixels; //Vector containing all the red pixel intensity values
+        std::vector<u_char> gPixels; //Vector containing all the green pixel intensity values
+        std::vector<u_char> bPixels; //Vector containing all the blue pixel intensity values
+
+        std::vector<unsigned char> convolvedRGB;
+
+        for (int i = 0; i < rgbPixels.size(); i += 3) //extract the intensities of each colour into separate vectors
+        {
+            rPixels.push_back(rgbPixels[i]);
+            gPixels.push_back(rgbPixels[i + 1]);
+            bPixels.push_back(rgbPixels[i + 2]);
+        }
+        unsigned int W[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
+        int r = 0, g = 0, b = 0;
+        for (int i = 0; i < rPixels.size(); i++)
+        {
+            int x = i % numCols;
+            int y = i / numRows;
+
+            //if on one of the edges of the image
+            if ((x == 0) || (x == numRows - 1) || (y == 0) || (y == numRows - 1))
+            {
+                r = 0;
+                g = 0;
+                b = 0;
+            }
+            else
+            {
+                r = 0;
+                g = 0;
+                b = 0;
+                for (int dx = -1; dx <= 1; ++dx)
+                {
+                    for (int dy = -1; dy <= 1; ++dy)
+                    {
+
+                        r = r + W[1 + dx][1 + dy] * rPixels[i + dx + (dy * numRows)];
+                        g = g + W[1 + dx][1 + dy] * gPixels[i + dx + (dy * numRows)];
+                        b = b + W[1 + dx][1 + dy] * bPixels[i + dx + (dy * numRows)];
+                    }
+                }
+            }
+
+            convolvedRGB.push_back(r / 16);
+            convolvedRGB.push_back(g / 16);
+            convolvedRGB.push_back(b / 16);
+        }
+
+        return convolvedRGB;
+    }
+
+    std::ostream &operator<<(std::ostream &os, const KMeansClusterer &kt)
+    {
+        for (auto const &cluster : kt.clusters)
+        {
+            std::cout << *cluster;
+        }
+
+        return os;
+    }
+
+    //std::vector<u_char> KMeansClusterer::convertToGreyscale(std::vector<u_char> rgbValues) {}
+    KMeansClusterer::~KMeansClusterer()
+    {
+        //std::cout << "KMeansClusterer destroyed." << std::endl;
+    }
 } // namespace CHNJAR003

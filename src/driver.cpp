@@ -8,11 +8,12 @@ int main(int argc, char *argv[])
     //Minimum number of arguments is: 2 (executable name and dataset directory)
     //Maximum valid number of arguments is 9
 
-    if (argc <= 9)
+    if (argc <= 10)
     {
         std::string dataset;
         std::string output;
         bool colour = false;
+        bool complex = false;
         int n = 10; //default 10
         int b = 1;  //default 1
 
@@ -55,11 +56,18 @@ int main(int argc, char *argv[])
             }
             else if (std::string(argv[i]).compare("-color") == 0)
             {
-                //std::cout << "-color : " << "true" << std::endl;
+                std::cout << "-color : "
+                          << "true" << std::endl;
                 colour = true;
             }
+            else if (std::string(argv[i]).compare("-complex") == 0)
+            {
+                std::cout << "-complex : "
+                          << "true" << std::endl;
+                complex = true;
+            }
         }
-        CHNJAR003::KMeansClusterer test = CHNJAR003::KMeansClusterer(dataset, output, n, b, colour);
+        CHNJAR003::KMeansClusterer test = CHNJAR003::KMeansClusterer(dataset, output, n, b, colour, complex);
     }
     else
     {
