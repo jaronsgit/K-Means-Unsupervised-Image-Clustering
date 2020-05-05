@@ -27,32 +27,6 @@ namespace CHNJAR003
 
         std::vector<std::string> fileNames;
 
-        /*DIR *dir;
-        struct dirent *ent;
-        if ((dir = opendir(datasetDir.c_str())) != NULL)
-        {
-            // print all the files and directories within directory 
-            std::cout << "Extracting PPM file names from directory..." << std::endl;
-            std::string tempName;
-            while ((ent = readdir(dir)) != NULL)
-            {
-                //printf("%s\n", ent->d_name);
-                //std::cout << ent->d_type << std::endl;
-                tempName = ent->d_name;
-                if (tempName.find(".ppm") != std::string::npos)
-                {
-                    //std::cout << ent->d_name << std::endl;
-                    fileNames.push_back(tempName);
-                }
-            }
-            closedir(dir);
-        }
-        else
-        {
-            // could not open directory 
-            perror("");
-        }*/
-        /////////////////
         char buffer[128];
         std::string commandOutput = "";
 
@@ -134,8 +108,11 @@ namespace CHNJAR003
                     }
                     else if (useComplexFeature) //if complex feature was specified - use complex feature
                     {
-                        std::vector<u_char> greyscaleP = convertToGreyscale(rgbP); //vector now contains the greyscale image data
-                        std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>(id, fileName, binSize, greyscaleP, useRGB);
+
+                        std::vector<u_char> convolvedImg = applyConvolution(rgbP, Nrows, Ncols); //apply Gaussian blur to image
+                        this->useRGB = true;                                                     //requires RGB channels
+
+                        std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>(id, fileName, binSize, convolvedImg, useRGB);
                         id++;
                         images.push_back(tempCIPtr);
                     }
@@ -366,13 +343,6 @@ namespace CHNJAR003
 
         while (true)
         {
-            /*std::cout << "Iteration: " << iterationCount << std::endl
-                      << std::endl;
-            for (auto const &cluster : clusters)
-            {
-                std::cout << *cluster; //<< cluster->getMean()[0] << std::endl;
-            }*/
-            //std::cout << "Total spread = " << calculateTotalSpread() << std::endl;
             bool converged = true;
 
             //Assignment step - assign each observation to cluster with the nearest mean
@@ -413,7 +383,6 @@ namespace CHNJAR003
             //Update step - recalculate the means of each cluster
             for (int cl = 0; cl < numClusters; cl++)
             {
-                //clusters[cl]->setMean(clusters[cl]->calculateNewMean());
                 clusters[cl]->recalculateCentroid();
             }
 
@@ -450,8 +419,6 @@ namespace CHNJAR003
                     outFile.close();
                     std::cout << "----------------------------------------------------------" << std::endl;
                 }
-
-                //std::cout << "Total spread = " << calculateTotalSpread() << std::endl;
                 break;
             }
             iterationCount++;
@@ -467,10 +434,6 @@ namespace CHNJAR003
             {
                 histogram[pixel] += 1;
             }
-
-            /*std::cout << "[ ";
-            std::copy(histogram.begin(), histogram.end(), std::ostream_iterator<unsigned int>(std::cout, ", "));
-            std::cout << " ]\n";*/
         }
         catch (const std::exception &e)
         {
@@ -611,7 +574,7 @@ namespace CHNJAR003
             gPixels.push_back(rgbPixels[i + 1]);
             bPixels.push_back(rgbPixels[i + 2]);
         }
-        unsigned int W[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
+        unsigned int W[3][3] = {{1, 1, 1}, {1, 1, 1}, {1, 1, 1}};
         int r = 0, g = 0, b = 0;
         for (int i = 0; i < rPixels.size(); i++)
         {
@@ -642,9 +605,9 @@ namespace CHNJAR003
                 }
             }
 
-            convolvedRGB.push_back(r / 16);
-            convolvedRGB.push_back(g / 16);
-            convolvedRGB.push_back(b / 16);
+            convolvedRGB.push_back(r / 9);
+            convolvedRGB.push_back(g / 9);
+            convolvedRGB.push_back(b / 9);
         }
 
         return convolvedRGB;

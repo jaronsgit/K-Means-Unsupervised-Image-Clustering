@@ -29,6 +29,12 @@ NB: the executable is located in the bin directory
 clusterer <dataset> [-o output] [-k n] [-bin b] [-color] [-complex]
 ```
 
+Note that due to the inherent unpredictability in the initial assignments of the cluster centroids, the program may given variable results between run with some giving better results than others.
+
+NB - when the complex flag is specified, the color flag's specification is simply ignored for the purposes of the complex feature.
+
+The more complex feature that should cluster the images with greater accuracy in this case, is an application of a Gaussian Blur convolution (http://web.pdx.edu/~jduh/courses/Archive/geog481w07/Students/Ludwig_ImageConvolution.pdf)(https://en.wikipedia.org/wiki/Kernel_(image_processing)#Convolution) to the RGB image data. The blur should even out the inconsistencies within the digit image colour gradients, allowing the images to be clustered more accurately through the reduction in noise. Other methods were attempted - namely implementations of Otsu's method of automatic image thresholding (http://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/MORSE/threshold.pdf), as well as the "Sobel–Feldman operator" for detecting image edges (http://homepages.inf.ed.ac.uk/rbf/HIPR2/sobel.htm). The code developed for these implementations has been left in the assignment and the results of applying these methods can be found within the folders: thresholdedImages (Otsu's Method results) and edgeImages (Sobel-Feldman Operator results). These methods did not improve the clustering results on average and I suppose this is due to the lack of use of RGB channels resulting in dimensionality reduction that loses too much information.
+
 #### For example: (if from within the main assignment directory)
 
 ```bash
