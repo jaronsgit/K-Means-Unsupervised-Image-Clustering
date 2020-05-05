@@ -80,7 +80,7 @@ namespace CHNJAR003
 
         std::ifstream ppmFile;
         std::string tempLine;
-        std::cout << "Reading in the PPM files..." << std::endl;
+        std::cout << "-> Reading in the PPM files" << std::endl;
         for (auto const fileName : fileNames)
         {
             ppmFile.open(datasetDir + "/" + fileName.c_str(), std::ios::in | std::ios::binary);
@@ -124,90 +124,20 @@ namespace CHNJAR003
                         std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>(id, fileName, binSize, greyscaleP, useRGB);
                         id++;
                         images.push_back(tempCIPtr);
-
-                        //TESTING
-
-                        //if (fileName.compare("zero_9.ppm") == 0)
-                        //{
-                        /*
-                        std::vector<u_char> convolvedImg = applyConvolution(rgbP, Nrows, Ncols);
-
-                        std::ofstream outputConvolve;
-                        outputConvolve.open(("convolvedImages/" + fileName).c_str(), std::ios::out | std::ios::binary);
-                        outputConvolve << "P6" << std::endl
-                                       << Ncols << std::endl
-                                       << Nrows << std::endl
-                                       << 255 << std::endl;
-
-                        for (int i = 0; i < convolvedImg.size(); i += 3)
-                        {
-                            char data[3] = {char(convolvedImg[i]), char(convolvedImg[i + 1]), char(convolvedImg[i + 2])}; //all the same value
-                            outputConvolve.write(data, 3);
-                        }
-
-                        outputConvolve.close();*/
-                        /*std::vector<u_char> edgeImg = detectImageEdges(greyscaleP, Nrows, Ncols);
-
-                        std::ofstream outputGreyscale;
-                        outputGreyscale.open(("edgeImages/" + fileName).c_str(), std::ios::out | std::ios::binary);
-                        outputGreyscale << "P6" << std::endl
-                                        << Ncols << std::endl
-                                        << Nrows << std::endl
-                                        << 255 << std::endl;
-                        for (auto const &pixel : edgeImg)
-                        {
-                            char data[3] = {char(pixel), char(pixel), char(pixel)}; //all the same value
-                            outputGreyscale.write(data, 3);
-                        }
-                        outputGreyscale.close();*/
-
-                        /*std::cout << tempCIPtr->getImageName() << " histogram:" << std::endl;
-                            std::cout << "[ ";
-                            std::copy(tempCIPtr->getFeature().begin(), tempCIPtr->getFeature().end(), std::ostream_iterator<unsigned int>(std::cout, ", "));
-                            std::cout << " ]\n";*/
-
-                        /*std::vector<u_char> thresholdedImg = thresholdGreyscaleImage(greyscaleP);
-
-                        std::ofstream outputGreyscale;
-                        outputGreyscale.open(("thresholdedImages/" + fileName).c_str(), std::ios::out | std::ios::binary);
-                        outputGreyscale << "P6" << std::endl
-                                        << Ncols << std::endl
-                                        << Nrows << std::endl
-                                        << 255 << std::endl;
-                        for (auto const &pixel : thresholdedImg)
-                        {
-                            char data[3] = {char(pixel), char(pixel), char(pixel)}; //all the same value
-                            outputGreyscale.write(data, 3);
-                        }
-                        outputGreyscale.close();
-
-                        if (fileName.compare("zero_1.ppm") == 0)
-                        {
-                            std::ofstream outputGreyscale;
-                            outputGreyscale.open("zero1grey.ppm", std::ios::out | std::ios::binary);
-                            outputGreyscale << "P6" << std::endl
-                                            << Ncols << std::endl
-                                            << Nrows << std::endl
-                                            << 255 << std::endl;
-                            for (auto const &pixel : greyscaleP)
-                            {
-                                char data[3] = {char(pixel), char(pixel), char(pixel)}; //all the same value
-                                outputGreyscale.write(data, 3);
-                            }
-                            outputGreyscale.close();
-                        }*/
-
-                        //}
                     }
-                    //if the color parameter was specified and complex feature parameter was not specified
+                    //if the color parameter was specified and complex feature parameter was not specified - use rgb features
                     else if (useRGB && !useComplexFeature)
                     {
                         std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>(id, fileName, binSize, rgbP, useRGB);
                         id++;
                         images.push_back(tempCIPtr);
                     }
-                    else if (useComplexFeature) //if complex feature was specified
+                    else if (useComplexFeature) //if complex feature was specified - use complex feature
                     {
+                        std::vector<u_char> greyscaleP = convertToGreyscale(rgbP); //vector now contains the greyscale image data
+                        std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>(id, fileName, binSize, greyscaleP, useRGB);
+                        id++;
+                        images.push_back(tempCIPtr);
                     }
                 }
                 catch (const std::exception &e)
@@ -218,7 +148,7 @@ namespace CHNJAR003
                 ppmFile.close();
             }
         }
-        std::cout << "Finished reading and processing of PPM files." << std::endl;
+        std::cout << "-> Finished reading and processing of PPM files" << std::endl;
         return images;
     }
 
@@ -364,6 +294,7 @@ namespace CHNJAR003
     {
         //Initialise the clusters
         //Must initialise k=numClusters unique clusters
+
         std::vector<int> usedImageIds;
         int numImages = images.size();
         int imageID;
@@ -382,19 +313,66 @@ namespace CHNJAR003
             images[imageID]->setClusterID(i);
             clusters.push_back(std::move(tempCluster));
         }
+        ////////////New initialisation method
+        /*int numImages = images.size();
+        std::srand(unsigned(time(0)));
+        std::random_shuffle(images.begin(), images.end());
 
-        std::cout << "Running the K-Means Clustering Algorithm..." << std::endl;
+        int stepSize = numImages / numClusters;
 
-        int iterationCount = 1;
+        for (int i = 0; i < numClusters; ++i)
+        {
+            std::unique_ptr<Cluster> tempCluster(new Cluster(i, useRGB));
+            clusters.push_back(std::move(tempCluster));
+        }
+
+        //if even number of clusters
+        if (numClusters % 2 == 0)
+        {
+            for (int i = 0; i < numImages; ++i)
+            {
+                images[i]->setClusterID(i / stepSize);
+                clusters[i / stepSize]->addClusterImage(images[i]);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < numImages; ++i)
+            {
+                if (i < numImages - 1)
+                {
+                    images[i]->setClusterID(i / stepSize);
+                    clusters[i / stepSize]->addClusterImage(images[i]);
+                }
+                else //place the last element in the last cluster
+                {
+                    images[i]->setClusterID(numClusters - 1);
+                    clusters[numClusters - 1]->addClusterImage(images[i]);
+                }
+            }
+        }
+
+        for (int i = 0; i < numClusters; ++i)
+        {
+            clusters[i]->recalculateCentroid();
+        }
+*/
+        ////////////
+
+        std::cout << "-> Running the K-Means Clustering Algorithm" << std::endl;
+        std::cout << "----------------------------------------------------------" << std::endl;
+
+        int iterationCount = 0;
 
         while (true)
         {
-            std::cout << "Iteration: " << iterationCount << std::endl
+            /*std::cout << "Iteration: " << iterationCount << std::endl
                       << std::endl;
             for (auto const &cluster : clusters)
             {
                 std::cout << *cluster; //<< cluster->getMean()[0] << std::endl;
-            }
+            }*/
+            //std::cout << "Total spread = " << calculateTotalSpread() << std::endl;
             bool converged = true;
 
             //Assignment step - assign each observation to cluster with the nearest mean
@@ -441,11 +419,36 @@ namespace CHNJAR003
 
             if (converged || iterationCount >= 50) //max iteration count of 50
             {
+
                 std::cout << std::endl
-                          << "Clustering completed in: " << iterationCount << " iterations." << std::endl;
+                          << "=> Clustering completed in: " << iterationCount << " iterations."
+                          << std::endl;
+
+                int lineLen = std::string("=> Clustering completed in: " + std::to_string(iterationCount) + " iterations.").length();
+                std::string line;
+                for (int a = 0; a < lineLen; ++a)
+                {
+                    line += "^";
+                }
+
+                std::cout << line << std::endl;
                 for (auto const &cluster : clusters)
                 {
                     std::cout << *cluster;
+                }
+
+                if (outputFileName.compare("") != 0)
+                {
+                    std::cout << "----------------------------------------------------------" << std::endl;
+                    std::cout << "-> Writing clustering results to: " << outputFileName << std::endl;
+                    std::ofstream outFile;
+                    outFile.open(outputFileName, std::ofstream::out);
+                    for (auto const &cluster : clusters)
+                    {
+                        outFile << *cluster;
+                    }
+                    outFile.close();
+                    std::cout << "----------------------------------------------------------" << std::endl;
                 }
 
                 //std::cout << "Total spread = " << calculateTotalSpread() << std::endl;

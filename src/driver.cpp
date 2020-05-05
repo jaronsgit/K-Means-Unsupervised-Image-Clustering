@@ -1,14 +1,15 @@
 #include <iostream>
 #include <vector>
+#include <iomanip>
 #include "../include/KMeansClusterer.h"
 #define PRINT(x) std::cout << x;
 
 int main(int argc, char *argv[])
 {
     //Minimum number of arguments is: 2 (executable name and dataset directory)
-    //Maximum valid number of arguments is 9
+    //Maximum valid number of arguments is 10
 
-    if (argc <= 10)
+    if (argc <= 10 && argc > 1)
     {
         std::string dataset;
         std::string output;
@@ -56,18 +57,27 @@ int main(int argc, char *argv[])
             }
             else if (std::string(argv[i]).compare("-color") == 0)
             {
-                std::cout << "-color : "
-                          << "true" << std::endl;
+
                 colour = true;
             }
             else if (std::string(argv[i]).compare("-complex") == 0)
             {
-                std::cout << "-complex : "
-                          << "true" << std::endl;
+
                 complex = true;
             }
         }
+        std::cout << "----------------------------------------------------------" << std::endl;
+        std::cout << "Performing K-Means Clustering" << std::endl;
+        std::cout << "----------------------------------------------------------" << std::endl;
+        std::cout << std::left << std::setw(25) << "Dataset : " << dataset << std::endl;
+        std::cout << std::left << std::setw(25) << "Output : " << output << std::endl;
+        std::cout << std::left << std::setw(25) << "Number of Clusters : " << n << std::endl;
+        std::cout << std::left << std::setw(25) << "Bin Size : " << b << std::endl;
+        std::cout << std::left << std::setw(25) << "Color : " << (colour ? "true" : "false") << std::endl;
+        std::cout << std::left << std::setw(25) << "Complex : " << (complex ? "true" : "false") << std::endl;
+        std::cout << "----------------------------------------------------------" << std::endl;
         CHNJAR003::KMeansClusterer clusterer = CHNJAR003::KMeansClusterer(dataset, output, n, b, colour, complex);
+
         clusterer.runClustering();
     }
     else

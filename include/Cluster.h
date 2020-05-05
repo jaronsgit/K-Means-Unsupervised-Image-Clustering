@@ -32,9 +32,9 @@ namespace CHNJAR003
         ~Cluster() = default;                             //destructor
 
         Cluster(const int id, const std::shared_ptr<ClusterImage> &cImgPtr, bool colour); //parameterised constructor - takes in its cluster id number as well as an initial clusterImage
-
-        void recalculateCentroid(void);                             //recomputes the centroid of the cluster based on the images assigned to the cluster
-        const std::vector<std::vector<double>> getMean(void) const; //returns a vector containing the centroid histogram(s) of the cluster \
+        Cluster(const int id, bool colour);                                               //parameterised constructor
+        void recalculateCentroid(void);                                                   //recomputes the centroid of the cluster based on the images assigned to the cluster
+        const std::vector<std::vector<double>> getMean(void) const;                       //returns a vector containing the centroid histogram(s) of the cluster \
                                                                     either just the greyscale channel, or the R, G and B channels depending one what was specified initially
 
         void clearCluster(void);                                            //Remove all the images assigned to the cluster

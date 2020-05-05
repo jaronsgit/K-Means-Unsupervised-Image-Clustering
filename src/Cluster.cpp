@@ -12,6 +12,10 @@ namespace CHNJAR003
         recalculateCentroid();          //Compute the initial centroid
     }
 
+    Cluster::Cluster(const int id, bool colour) : clusterID(id), useRGB(colour)
+    {
+    }
+
     void Cluster::recalculateCentroid(void)
     {
         if (this->useRGB)
@@ -126,9 +130,10 @@ namespace CHNJAR003
         {
             if (!useRGB)
             {
+                std::vector<unsigned int> tempFeature = image->getFeature()[0];
                 for (int j = 0; j < mean.size(); j++)
                 {
-                    spread += std::pow(mean[j] - image->getFeature()[0][j], 2.0);
+                    spread += std::pow(mean[j] - tempFeature[j], 2.0);
                 }
             }
             else
@@ -151,7 +156,7 @@ namespace CHNJAR003
 
     std::ostream &operator<<(std::ostream &os, const Cluster &ct)
     {
-        os << "Cluster " << ct.getID() << " :";
+        os << "Cluster " << ct.getID() << ":";
         for (auto const &img : ct.images)
         {
             os << " " << img->getImageName();

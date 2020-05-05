@@ -27,7 +27,7 @@ $(BUILD)/%.o : $(SRC)/%.cpp
 run:
 	clear
 	@echo "🚀 Executing..."
-	./$(BIN)/$(TARGET) Gradient_Numbers_PPMS -o testoutput -k 10 -bin 1
+	./$(BIN)/$(TARGET) Gradient_Numbers_PPMS -k 10 -bin 1
 
 tests:
 	@echo "Compiling for Tests..."
