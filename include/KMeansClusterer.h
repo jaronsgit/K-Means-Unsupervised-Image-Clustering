@@ -24,6 +24,7 @@ namespace CHNJAR003
         int findNearestCluster(std::shared_ptr<ClusterImage> image); //return the id number of the nearest cluster
 
     public:
+        //The "Rule of Five" has been obeyed - none of the copy, move, copy assignment, move assingment or destructor needed to be manually defined and hence were not implemented
         KMeansClusterer(void) = default;
         KMeansClusterer(const KMeansClusterer &rhs) = delete;
         KMeansClusterer(KMeansClusterer &&rhs) = default;
@@ -31,17 +32,19 @@ namespace CHNJAR003
         KMeansClusterer &operator=(KMeansClusterer &&rhs) = default;
         KMeansClusterer(const std::string &dataset, const std::string &output, const int numClusters, const int binSize, const bool colour, const bool complex);
 
-        std::vector<std::shared_ptr<ClusterImage>> readInImages(const std::string &datasetDir);
-        const std::vector<u_char> convertToGreyscale(const std::vector<u_char> &rawRGBdata);
+        std::vector<std::shared_ptr<ClusterImage>> readInImages(const std::string &datasetDir); //reads the image files from the given directory name and processes them into ClusterImages
+        const std::vector<u_char> convertToGreyscale(const std::vector<u_char> &rawRGBdata);    //converts the raw RGB data from a PPM file to its greyscale equivalent
 
         const std::vector<u_char> thresholdGreyscaleImage(const std::vector<u_char> &greyscalePixels);
         const std::vector<u_char> detectImageEdges(const std::vector<u_char> &greyscalePixels, int numRows, int numCols);
         const std::vector<u_char> applyConvolution(const std::vector<u_char> &rgbPixels, int numRows, int numCols);
-        void runClustering();
+
+        const double calculateTotalSpread(void) const;
+        void runClustering(); //Runs the K-Means clustering algorithm on the images that have been read in
 
         ~KMeansClusterer();
 
-        friend std::ostream &operator<<(std::ostream &os, const KMeansClusterer &kt);
+        friend std::ostream &operator<<(std::ostream &os, const KMeansClusterer &kt); //Overloaded output operator - write's the current clustering of the images to a specified output stream
     };
 
 } // namespace CHNJAR003

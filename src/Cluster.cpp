@@ -71,30 +71,6 @@ namespace CHNJAR003
         }
     }
 
-    /*std::vector<float> Cluster::calculateNewMean(void) const
-    {
-        std::vector<float> tempMean(256 / images[0]->getBinSize(), 0.0); //Based off the assumption that all the images have the same feature dimension
-
-        //Can maybe replace this with a std::transform version later on
-        for (auto const &img : images)
-        {
-            std::vector<unsigned int> tempFeature = img->getFeature()[0];
-
-            for (int i = 0; i < tempFeature.size(); i++)
-            {
-                tempMean[i] += tempFeature[i];
-            }
-        }
-        int numImages = images.size();
-
-        for (int i = 0; i < tempMean.size(); i++)
-        {
-            tempMean[i] /= numImages;
-        }
-
-        return tempMean;
-    }*/
-
     const std::vector<std::vector<double>> Cluster::getMean(void) const
     {
         if (!useRGB) //colour parameter not specified - return just the greyscale channel centroid
@@ -140,6 +116,37 @@ namespace CHNJAR003
     int Cluster::getSize(void) const
     {
         return this->images.size();
+    }
+
+    const double Cluster::getClusterSpread(void) const
+    {
+        double spread = 0.0;
+
+        for (auto const &image : images)
+        {
+            if (!useRGB)
+            {
+                for (int j = 0; j < mean.size(); j++)
+                {
+                    spread += std::pow(mean[j] - image->getFeature()[0][j], 2.0);
+                }
+            }
+            else
+            {
+                std::vector<std::vector<unsigned int>> features = image->getFeature();
+                std::vector<unsigned int> imageRfeature = features[0];
+                std::vector<unsigned int> imageGfeature = features[1];
+                std::vector<unsigned int> imageBfeature = features[2];
+
+                for (int i = 0; i < rCentroid.size(); i++)
+                {
+                    spread += std::pow(rCentroid[i] - imageRfeature[i], 2.0);
+                    spread += std::pow(gCentroid[i] - imageGfeature[i], 2.0);
+                    spread += std::pow(bCentroid[i] - imageBfeature[i], 2.0);
+                }
+            }
+        }
+        return spread;
     }
 
     std::ostream &operator<<(std::ostream &os, const Cluster &ct)

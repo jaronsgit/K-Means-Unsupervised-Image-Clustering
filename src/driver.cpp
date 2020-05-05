@@ -67,7 +67,8 @@ int main(int argc, char *argv[])
                 complex = true;
             }
         }
-        CHNJAR003::KMeansClusterer test = CHNJAR003::KMeansClusterer(dataset, output, n, b, colour, complex);
+        CHNJAR003::KMeansClusterer clusterer = CHNJAR003::KMeansClusterer(dataset, output, n, b, colour, complex);
+        clusterer.runClustering();
     }
     else
     {

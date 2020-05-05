@@ -17,7 +17,7 @@ namespace CHNJAR003
     KMeansClusterer::KMeansClusterer(const std::string &dataset, const std::string &output, const int numClusters, const int binSize, const bool colour, const bool complex) : datasetDir(dataset), outputFileName(output), numClusters(numClusters), binSize(binSize), useRGB(colour), useComplexFeature(complex)
     {
         this->images = readInImages(datasetDir);
-        runClustering();
+        //runClustering();
     }
 
     std::vector<std::shared_ptr<ClusterImage>> KMeansClusterer::readInImages(const std::string &datasetDir)
@@ -89,11 +89,11 @@ namespace CHNJAR003
             if (ppmFile.is_open())
             {
 
-                ppmFile >> tempLine; //should read the "magic number" i.e. P6
+                ppmFile >> tempLine; //Read the "magic number" i.e. P6
 
-                getline(ppmFile, tempLine);
+                getline(ppmFile, tempLine); //Read the next line - could be a comment
 
-                while (tempLine.compare("255") != 0)
+                while (tempLine.compare("255") != 0) //Read all the lines of the header until reading the "255" max value
                 {
                     tempLines.push_back(tempLine);
                     getline(ppmFile, tempLine);
@@ -101,6 +101,7 @@ namespace CHNJAR003
 
                 try
                 {
+                    //Extract the file information from the header lines - width and height
                     std::istringstream ss(tempLines.back());
                     std::string token;
                     getline(ss, token, ' ');
@@ -116,7 +117,8 @@ namespace CHNJAR003
 
                     std::vector<u_char> rgbP(buffer, buffer + numBytes); //vector now contains the RGB image data
 
-                    if (!useRGB && !useComplexFeature) //if color parameter was not used and complex feature not requested
+                    //if color parameter was not specified and complex feature parameter was not specified - use greyscale of image
+                    if (!useRGB && !useComplexFeature)
                     {
                         std::vector<u_char> greyscaleP = convertToGreyscale(rgbP); //vector now contains the greyscale image data
                         std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>(id, fileName, binSize, greyscaleP, useRGB);
@@ -197,13 +199,14 @@ namespace CHNJAR003
 
                         //}
                     }
+                    //if the color parameter was specified and complex feature parameter was not specified
                     else if (useRGB && !useComplexFeature)
-                    { //if the color parameter was specified and complex feature not requested
+                    {
                         std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>(id, fileName, binSize, rgbP, useRGB);
                         id++;
                         images.push_back(tempCIPtr);
                     }
-                    else if (useComplexFeature) //if complex feature was requested
+                    else if (useComplexFeature) //if complex feature was specified
                     {
                     }
                 }
@@ -215,23 +218,26 @@ namespace CHNJAR003
                 ppmFile.close();
             }
         }
-        //std::shared_ptr<ClusterImage> tempCIPtr = std::make_shared<ClusterImage>();
         std::cout << "Finished reading and processing of PPM files." << std::endl;
         return images;
     }
 
+    //function that returns the cluster ID of the cluster that is the lowest Euclidean distance away from a given image
     int KMeansClusterer::findNearestCluster(std::shared_ptr<ClusterImage> image)
     {
+        //If colour parameter was not specified
         if (!useRGB)
         {
             double tot = 0.0, minEuclidDist;
 
             int nearestClusterID;
 
+            //Temporarily store the centroid of the first cluster
             std::vector<double> tempMean = clusters[0]->getMean()[0];
+            //Store the feature of the image - greyscale in this case
             std::vector<unsigned int> tempFeature = image->getFeature()[0];
 
-            //Calculate the Euclidian distance from the first cluster
+            //Calculate the Euclidean distance from the first cluster
             for (int i = 0; i < 256 / binSize; i++)
             {
                 tot += std::pow(tempMean[i] - tempFeature[i], 2.0);
@@ -240,7 +246,8 @@ namespace CHNJAR003
             //minEuclidDist = std::sqrt(tot);
             minEuclidDist = tot;
             nearestClusterID = clusters[0]->getID();
-            //Calculate Euclidiant distances to other clusters
+
+            //Calculate Euclidean distances to other clusters - find the lowest
             for (int i = 1; i < numClusters; i++)
             {
                 double newEuclidDist;
@@ -256,6 +263,7 @@ namespace CHNJAR003
                 //newEuclidDist = std::sqrt(tot);
                 newEuclidDist = tot;
 
+                //If new, lower distance has been found
                 if (newEuclidDist < minEuclidDist)
                 {
                     minEuclidDist = newEuclidDist;
@@ -265,27 +273,24 @@ namespace CHNJAR003
 
             return nearestClusterID;
         }
+        //if colour parameter was specified
         else
         {
-            //std::cout << "About to find nearest cluster..." << std::endl;
+
             double tot = 0.0, minEuclidDist;
             int nearestClusterID;
-
-            //std::cout << "Getting first cluster centroids..." << std::endl;
+            //Temporarily store the R, G and B channel centroids of the first cluster
             std::vector<std::vector<double>> centroids = clusters[0]->getMean();
             std::vector<double> clusterRcentroid = centroids[0];
             std::vector<double> clusterGcentroid = centroids[1];
             std::vector<double> clusterBcentroid = centroids[2];
-            //std::cout << "Getting image features..." << std::endl;
+            //Store the R, G and B channel features of the image
             std::vector<std::vector<unsigned int>> features = image->getFeature();
             std::vector<unsigned int> imageRfeature = features[0];
             std::vector<unsigned int> imageGfeature = features[1];
             std::vector<unsigned int> imageBfeature = features[2];
 
-            //Calculate the Euclidian distance from the first cluster
-            //std::cout << "Calculating first distance..." << std::endl;
-            //std::cout << "clusterCentroid size:\t" << clusterRcentroid.size() << std::endl;
-            //std::cout << "imageFeature size:\t" << imageRfeature.size() << std::endl;
+            //Calculate the Euclidean distance of the image from the first cluster
             for (int i = 0; i < clusterRcentroid.size(); i++)
             {
                 tot += std::pow(clusterRcentroid[i] - imageRfeature[i], 2.0);
@@ -296,8 +301,8 @@ namespace CHNJAR003
             //minEuclidDist = std::sqrt(tot);
             minEuclidDist = tot;
             nearestClusterID = clusters[0]->getID();
-            //std::cout << "Calculating other distances..." << std::endl;
-            //Calculate Euclidian distances to other clusters
+
+            //Calculate Euclidean distances to other clusters - find the lowest
             for (int i = 1; i < numClusters; i++)
             {
                 double newEuclidDist;
@@ -307,6 +312,7 @@ namespace CHNJAR003
                 std::vector<double> clusterRcentroid = centroids[0];
                 std::vector<double> clusterGcentroid = centroids[1];
                 std::vector<double> clusterBcentroid = centroids[2];
+
                 for (int j = 0; j < clusterRcentroid.size(); j++)
                 {
                     tot += std::pow(clusterRcentroid[j] - imageRfeature[j], 2.0);
@@ -317,6 +323,7 @@ namespace CHNJAR003
                 //newEuclidDist = std::sqrt(tot);
                 newEuclidDist = tot;
 
+                //If new, lower distance has been found
                 if (newEuclidDist < minEuclidDist)
                 {
                     minEuclidDist = newEuclidDist;
@@ -326,31 +333,9 @@ namespace CHNJAR003
 
             return nearestClusterID;
         }
-
-        /*
-    float imageMean = image->getFeatureMean();
-    float clusterMean = clusters[0]->getMean();
-    int nearestClusterID = clusters[0]->getID();
-
-    double minDist = std::abs(clusterMean - imageMean);
-
-    double newDist;
-
-    for (int i = 1; i < numClusters; i++)
-    {
-        clusterMean = clusters[i]->getMean();
-        newDist = std::abs(imageMean - clusterMean);
-
-        if (newDist < minDist)
-        {
-            minDist = newDist;
-            nearestClusterID = clusters[i]->getID();
-        }
     }
 
-    return nearestClusterID;*/
-    }
-
+    //Convert the raw RGB data from the PPM file to greyscale pixel data
     const std::vector<u_char> KMeansClusterer::convertToGreyscale(const std::vector<u_char> &rawRGBdata)
     {
         std::vector<u_char> greyscaleP;
@@ -364,9 +349,19 @@ namespace CHNJAR003
         return greyscaleP;
     }
 
+    const double KMeansClusterer::calculateTotalSpread(void) const
+    {
+        double totalDist = 0.0;
+        for (auto const &cluster : clusters)
+        {
+            totalDist = cluster->getClusterSpread();
+        }
+        return totalDist;
+    }
+
+    //Run the K-Means clustering algorithm on the images
     void KMeansClusterer::runClustering()
     {
-
         //Initialise the clusters
         //Must initialise k=numClusters unique clusters
         std::vector<int> usedImageIds;
@@ -387,36 +382,10 @@ namespace CHNJAR003
             images[imageID]->setClusterID(i);
             clusters.push_back(std::move(tempCluster));
         }
-        std::cout << "clusters vector size: " << clusters.size() << std::endl;
-
-        /*for (auto const &cluster : clusters)
-    {
-        std::cout << "cluster:" << *cluster << " mean:" << cluster->getMean() << std::endl;
-    }
-
-    for (auto const &image : images)
-    {
-        std::cout << image->getImageName() << " \t" << image->getFeatureMean() << std::endl;
-    }*/
 
         std::cout << "Running the K-Means Clustering Algorithm..." << std::endl;
 
         int iterationCount = 1;
-        /*
-    std::cout << "Iteration: " << iterationCount << std::endl;
-    for (auto const &cluster : clusters)
-    {
-        std::cout << *cluster << cluster->getMean() << std::endl;
-    }
-
-    //Assignment step - assign each observation to cluster with the nearest mean
-    for (int i = 0; i < numImages; i++)
-    {
-        int currentClusterID = images[i]->getClusterID();
-        int nearestClusterID = findNearestCluster(images[i]);
-
-        std::cout << images[i]->getImageName() << "\tfeature mean: " << images[i]->getFeatureMean() << " \tnearest cluster: " << nearestClusterID << std::endl;
-    }*/
 
         while (true)
         {
@@ -478,6 +447,8 @@ namespace CHNJAR003
                 {
                     std::cout << *cluster;
                 }
+
+                //std::cout << "Total spread = " << calculateTotalSpread() << std::endl;
                 break;
             }
             iterationCount++;
@@ -676,6 +647,7 @@ namespace CHNJAR003
         return convolvedRGB;
     }
 
+    //Overloaded output operator - write's the current clustering of the images to a specified output stream
     std::ostream &operator<<(std::ostream &os, const KMeansClusterer &kt)
     {
         for (auto const &cluster : kt.clusters)
@@ -686,9 +658,7 @@ namespace CHNJAR003
         return os;
     }
 
-    //std::vector<u_char> KMeansClusterer::convertToGreyscale(std::vector<u_char> rgbValues) {}
     KMeansClusterer::~KMeansClusterer()
     {
-        //std::cout << "KMeansClusterer destroyed." << std::endl;
     }
 } // namespace CHNJAR003
