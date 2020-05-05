@@ -248,7 +248,7 @@ namespace CHNJAR003
 
                 std::vector<double> tempMean = clusters[i]->getMean()[0];
 
-                for (int j = 0; j < 256 / binSize; j++)
+                for (int j = 0; j < tempMean.size(); j++)
                 {
                     tot += std::pow(tempMean[j] - tempFeature[j], 2.0);
                 }
@@ -307,7 +307,7 @@ namespace CHNJAR003
                 std::vector<double> clusterRcentroid = centroids[0];
                 std::vector<double> clusterGcentroid = centroids[1];
                 std::vector<double> clusterBcentroid = centroids[2];
-                for (int j = 0; j < 256 / binSize; j++)
+                for (int j = 0; j < clusterRcentroid.size(); j++)
                 {
                     tot += std::pow(clusterRcentroid[j] - imageRfeature[j], 2.0);
                     tot += std::pow(clusterGcentroid[j] - imageGfeature[j], 2.0);

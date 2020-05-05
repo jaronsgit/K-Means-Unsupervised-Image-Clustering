@@ -30,20 +30,17 @@ namespace CHNJAR003
         const std::vector<std::vector<unsigned int>> extractFeaturesFromRawRGB(const int binSize, const std::vector<u_char> &rawRGBdata) const;
 
         const std::string &getImageName() const;
+        void setImageName(const std::string &imgName);
         const int getImgID() const;
+        void setImgID(const int id);
         const std::vector<std::vector<unsigned int>> getFeature() const; //will return vector containing greyscale histogram vector or \
                                                                     vector containing the R, G and B channel histogram vectors.
+        void setFeature(const std::vector<std::vector<unsigned int>> &features);
+
         const int getBinSize() const;
-
-        void setClusterID(const int clusterID);
+        void setBinSize(const int binSize);
         const int getClusterID(void) const;
-
-        /*bool setImageName(const std::string &imageName);
-    bool setImgID(const int id);
-    bool setFeature(const std::vector<u_char> &feature);*/
-
-        //float calculateMean(const std::vector<unsigned char> &histogramArr);
-        //float getMean(void) const;
+        void setClusterID(const int clusterID);
     };
 
 } // namespace CHNJAR003

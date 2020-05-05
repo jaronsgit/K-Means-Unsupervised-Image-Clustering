@@ -6,13 +6,10 @@
 namespace CHNJAR003
 {
 
-    Cluster::Cluster(const int id, const std::shared_ptr<ClusterImage> &cImgPtr, bool colour)
+    Cluster::Cluster(const int id, const std::shared_ptr<ClusterImage> &cImgPtr, bool colour) : clusterID(id), useRGB(colour)
     {
-        this->clusterID = id;
-        this->useRGB = colour;
-        this->addClusterImage(cImgPtr);
-        recalculateCentroid();
-        //this->mean = calculateNewMean();
+        this->addClusterImage(cImgPtr); //Initial image randomly assigned to initialise the centroid for the clustering algorithm
+        recalculateCentroid();          //Compute the initial centroid
     }
 
     void Cluster::recalculateCentroid(void)
@@ -74,7 +71,7 @@ namespace CHNJAR003
         }
     }
 
-    std::vector<float> Cluster::calculateNewMean(void) const
+    /*std::vector<float> Cluster::calculateNewMean(void) const
     {
         std::vector<float> tempMean(256 / images[0]->getBinSize(), 0.0); //Based off the assumption that all the images have the same feature dimension
 
@@ -96,17 +93,17 @@ namespace CHNJAR003
         }
 
         return tempMean;
-    }
+    }*/
 
     const std::vector<std::vector<double>> Cluster::getMean(void) const
     {
-        if (!useRGB)
+        if (!useRGB) //colour parameter not specified - return just the greyscale channel centroid
         {
             std::vector<std::vector<double>> centroid;
             centroid.push_back(mean);
             return centroid;
         }
-        else
+        else //colour parameter was specified - return R, G and B channels for the centroid
         {
             std::vector<std::vector<double>> centroid;
             centroid.push_back(rCentroid);
@@ -115,10 +112,6 @@ namespace CHNJAR003
             return centroid;
         }
     }
-    /*void Cluster::setMean(const std::vector<double> &mean)
-    {
-        this->mean = mean;
-    }*/
 
     void Cluster::clearCluster(void)
     {
@@ -159,11 +152,6 @@ namespace CHNJAR003
         os << std::endl;
 
         return os;
-    }
-
-    Cluster::~Cluster()
-    {
-        //std::cout << "Cluster:" << clusterID << " destroyed." << std::endl;
     }
 
 } // namespace CHNJAR003
